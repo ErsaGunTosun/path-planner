@@ -11,8 +11,6 @@ class Path:
 
         self.m = self.loadMap()
 
-
-    
     def createMap(self):
         self.G = ox.graph_from_place(self.place, network_type='drive')
         self.m = self.loadMap()
@@ -26,13 +24,13 @@ class Path:
         m = folium.Map(location=[center_lat, center_lon], zoom_start=15)
         return m   
     
-    def drawMap(self):
+    def drawMap(self,color="blue",size=3):
         gdf_edges = ox.graph_to_gdfs(self.G, nodes=False, edges=True)
         for idx, edge in gdf_edges.iterrows():
             folium.PolyLine(
                 locations=[[point[1], point[0]] for point in edge.geometry.coords],
-                color='blue',
-                weight=2
+                color=color,
+                weight=size
             ).add_to(self.m)
 
     def addMarker(self,location,name):
@@ -45,9 +43,9 @@ class Path:
         file_name = f"./map/{name}.html"
         self.m.save(file_name)
 
-    def printMapFig(self,name="Map"):
+    def printMapFig(self,name="Map",color="red"):
         fig, ax = ox.plot_graph(self.G, figsize=(10, 10), 
-                            edge_color='blue',node_size=10,show=False,)
+                            edge_color=color,node_size=10,show=False,)
         fig.canvas.manager.set_window_title(name)
         plt.show()
     
