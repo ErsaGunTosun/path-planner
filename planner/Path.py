@@ -15,7 +15,7 @@ class Path:
         self.G = ox.graph_from_place(self.place, network_type='drive')
         self.m = self.loadMap()
 
-    def loadMap():
+    def loadMap(self):
         gdf_nodes = ox.graph_to_gdfs(self.G, nodes=True, edges=False)
 
         center_lat = gdf_nodes['y'].mean()
@@ -40,7 +40,7 @@ class Path:
         ).add_to(self.m)
         
     def printMap(self,name="Map"):
-        file_name = f"./map/{name}.html"
+        file_name = f"./templates/{name}.html"
         self.m.save(file_name)
 
     def printMapFig(self,name="Map",color="red"):

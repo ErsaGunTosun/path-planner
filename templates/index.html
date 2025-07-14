@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block body %}
+  <div class="map-container">
+    <iframe id="mapFrame" class="map-frame" src="/map" title="Folium Map"></iframe>
+  </div>
+
+  <div class="top-menu">
+    <button class="menu-button" onclick="togglePanel('statistics')" title="İstatistikler"><i class="fa-solid fa-chart-simple"></i></button>
+    <button class="menu-button" onclick="togglePanel('controls')" title="Kontroller"><i class="fa-solid fa-gear"></i></button>
+    <button class="menu-button" onclick="togglePanel('settings')" title="Ayarlar"><i class="fa-solid fa-sliders"></i></button>
+  </div>
+{% endblock %}

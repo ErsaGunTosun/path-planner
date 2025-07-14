@@ -1,2 +1,19 @@
+# Python
+__pycache__
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+ppenv/
+env/
+venv/
+.venv/
+ENV/
+
+# Cache
 /cache
+
+# Logs
 .DS_Store
