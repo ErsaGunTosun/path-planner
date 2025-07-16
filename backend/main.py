@@ -30,7 +30,9 @@ def add_marker():
                 status = 'obstacle'
 
             all_markers.append({'lat': lat, 'lon': lon,'status':status})
-            return make_response(jsonify({"message": "markes add operation is succes", "status": "success","options":options}), 200)
+            marker_data = {'lat': lat, 'lon': lon,'status':status}
+
+            return make_response(jsonify({"message": "markes add operation is succes", "status": "success","marker":marker_data}), 200)
         else:
             return make_response(jsonify({"message":"marked add status is false","status":"errror"}),400)
     

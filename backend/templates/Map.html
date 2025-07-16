@@ -146,7 +146,7 @@
           return res.json();
         })
         .then(data => {
-            if(data.options.is_addMarker){
+            if(data.marker.status == 'marker'){
                 var icon = L.AwesomeMarkers.icon(
                   {
                     "markerColor": "blue",
@@ -159,7 +159,7 @@
                 L.marker([latitude,longitude],{icon: icon})
                     .addTo(map_10d8ba379c84a8a32988e7436c041a4b);
             }
-            else if (data.options.is_addObstacle){
+            else if (data.marker.status == 'obstacle'){
                 var icon = L.AwesomeMarkers.icon(
                   {
                     "markerColor": "red",
