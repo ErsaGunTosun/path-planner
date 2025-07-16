@@ -6,12 +6,13 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
 
     <meta name="viewport" content="width=device-width,
                 initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -74,7 +75,6 @@
         }
     );
       
-    console.log(map_10d8ba379c84a8a32988e7436c041a4b)
     let old_center ={lat:map_10d8ba379c84a8a32988e7436c041a4b.options.center[0],
       lng:map_10d8ba379c84a8a32988e7436c041a4b.options.center[0]} 
 
@@ -93,18 +93,38 @@
         }
     );
     tile_layer_dda35a9549bfa503ea7e6d238014b747.addTo(map_10d8ba379c84a8a32988e7436c041a4b);
-
+    
     const markers = {{ markers | tojson }};
+    
         if (markers.length > 0) {
-          console.log("as")
-          
             markers.forEach(marker => {
-              console.log(marker)
-                L.marker([marker.lat, marker.lon])
+              if (marker.status == 'marker'){
+                  var icon = L.AwesomeMarkers.icon(
+                  {
+                    "markerColor": "blue",
+                    "iconColor": "white",
+                    "prefix": "glyphicon",
+                    "extraClasses": "fa-rotate-0",
+                    "icon": "ok-sign"
+                  });
+                L.marker([marker.lat, marker.lon],{icon: icon})
+                    .addTo(map_10d8ba379c84a8a32988e7436c041a4b);
+              }
+              else{ 
+                  var icon = L.AwesomeMarkers.icon(
+                  {
+                    "markerColor": "red",
+                    "iconColor": "white",
+                    "prefix": "glyphicon",
+                    "extraClasses": "fa-rotate-0",
+                    "icon": "ok-sign"
+                  });
+                
+                  L.marker([marker.lat, marker.lon], {icon: icon})
                     .addTo(map_10d8ba379c84a8a32988e7436c041a4b)
+                    .bindPopup(marker.status);
+              }
             });
-
-          const latLngs = markers.map(marker => [marker.lat, marker.lon]);
       }
 
     function map_click_event(e) {
@@ -121,17 +141,46 @@
         })
         .then(res=>{
           if(res.status == 200){
-            L.marker([latitude, longitude])
-                    .addTo(map_10d8ba379c84a8a32988e7436c041a4b)
+           
           }
+          return res.json();
         })
+        .then(data => {
+            if(data.options.is_addMarker){
+                var icon = L.AwesomeMarkers.icon(
+                  {
+                    "markerColor": "blue",
+                    "iconColor": "white",
+                    "prefix": "glyphicon",
+                    "extraClasses": "fa-rotate-0",
+                    "icon": "ok-sign"
+                  });
+
+                L.marker([latitude,longitude],{icon: icon})
+                    .addTo(map_10d8ba379c84a8a32988e7436c041a4b);
+            }
+            else if (data.options.is_addObstacle){
+                var icon = L.AwesomeMarkers.icon(
+                  {
+                    "markerColor": "red",
+                    "iconColor": "white",
+                    "prefix": "glyphicon",
+                    "extraClasses": "fa-rotate-0",
+                    "icon": "ok-sign"
+                  });
+                
+                L.marker([latitude, longitude], {icon: icon})
+                    .addTo(map_10d8ba379c84a8a32988e7436c041a4b)
+                    .bindPopup("obstacle");
+            }
+        });
+
     }
     
     function map_move_event(){
       let new_center = map_10d8ba379c84a8a32988e7436c041a4b.getCenter();
       let changed_value = Math.abs(new_center.lat - old_center.lat) + Math.abs(new_center.lng - old_center.lng);
       if (changed_value >= 0.0001){
-        console.log(new_center);
          fetch("http://127.0.0.1:5000/change_center", {
             method: "POST",
             headers: {
