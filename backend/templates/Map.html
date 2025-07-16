@@ -73,7 +73,10 @@
 
         }
     );
-
+      
+    console.log(map_10d8ba379c84a8a32988e7436c041a4b)
+    let old_center ={lat:map_10d8ba379c84a8a32988e7436c041a4b.options.center[0],
+      lng:map_10d8ba379c84a8a32988e7436c041a4b.options.center[0]} 
 
     var tile_layer_dda35a9549bfa503ea7e6d238014b747 = L.tileLayer(
         "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -123,7 +126,27 @@
           }
         })
     }
+    
+    function map_move_event(){
+      let new_center = map_10d8ba379c84a8a32988e7436c041a4b.getCenter();
+      let changed_value = Math.abs(new_center.lat - old_center.lat) + Math.abs(new_center.lng - old_center.lng);
+      if (changed_value >= 0.0001){
+        console.log(new_center);
+         fetch("http://127.0.0.1:5000/change_center", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({ lat:new_center.lat,lon:new_center.lng }),
+
+        })
+      }
+      old_center = new_center;
+    }
+
 
     map_10d8ba379c84a8a32988e7436c041a4b.on('click', map_click_event);
+    map_10d8ba379c84a8a32988e7436c041a4b.on('moveend', map_move_event);
+    
 </script>
 </html>
