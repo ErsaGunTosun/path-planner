@@ -5,10 +5,6 @@ all_markers = [{'lat': 40.98765, 'lon': 29.05748}]
 
 app = Flask(__name__)
 
-@app.route("/")
-def home():
-    return render_template('index.html')
-
 @app.route("/map")
 def map():
     return render_template('Map.html',markers = all_markers)
