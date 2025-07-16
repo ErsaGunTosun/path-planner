@@ -1,19 +1,22 @@
 import React from 'react'
-import { FaGear,FaChartSimple,FaSliders } from "react-icons/fa6";
+import { FaGear,FaChartSimple,FaBookmark } from "react-icons/fa6";
 
-function TopMenu() {
+function TopMenu({handleMenuBtnClick}) {
   return (
     <div className="top-menu fixed top-5 right-5 z-50 flex flex-col gap-2">
 
-    <button className="menu-button w-12 h-12 bg-white cursor-pointer flex justify-center items-center rounded-full"  title="İstatistikler">
+    <button onClick={() => handleMenuBtnClick("statistic")} 
+    className="menu-button w-12 h-12 bg-white cursor-pointer flex justify-center items-center rounded-full">
       <FaChartSimple className="text-xl" />
     </button>
 
-    <button className="menu-button w-12 h-12 bg-white cursor-pointer flex justify-center items-center rounded-full" title="Kontroller">
+    <button onClick={() => handleMenuBtnClick("controls")}
+    className="menu-button w-12 h-12 bg-white cursor-pointer flex justify-center items-center rounded-full">
       <FaGear className="text-xl" />
       </button>
-    <button className="menu-button w-12 h-12 bg-white cursor-pointer flex justify-center items-center rounded-full" title="Ayarlar">
-      <FaSliders className="text-xl" />
+    <button onClick={() => handleMenuBtnClick("bookmarks")}
+     className="menu-button w-12 h-12 bg-white cursor-pointer flex justify-center items-center rounded-full">
+      <FaBookmark className="text-xl" />
       </button>
 
   </div>

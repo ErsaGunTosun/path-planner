@@ -5,6 +5,7 @@ all_markers = [{'lat': 40.98765, 'lon': 29.05748}]
 
 options = {
     "is_addMarker" : True,
+    "is_addObstacle": False,
     "center_map":{"lat":40.98235397234183, "lng":29.05953843050679}
 }
 
