@@ -19,21 +19,37 @@ function ControlPanel({ menuBtn, handleMenuBtnClick }) {
 
 
   useEffect(() => {
-    if(sessionStorage.getItem("isMarkeMode")){
+    if (sessionStorage.getItem("isMarkeMode")) {
       setIsMarkeMode(sessionStorage.getItem("isMarkeMode") === "true");
+      fetch("http://127.0.0.1:5000/options/marker", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({ isMarkeMode: sessionStorage.getItem("isMarkeMode") === "true" }),
+
+      })
     }
-    else{
+    else {
       sessionStorage.setItem("isMarkeMode", "true");
-      setIsMarkeMode(true);
     }
 
-    if(sessionStorage.getItem("isObstacleMode")){
+    if (sessionStorage.getItem("isObstacleMode")) {
       setIsObstacleMode(sessionStorage.getItem("isObstacleMode") === "true");
+        fetch("http://127.0.0.1:5000/options/obstacle", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({ isObstacleMode: sessionStorage.getItem("isObstacleMode") === "true" }),
+
+      })
     }
-    else{
+    else {
       sessionStorage.setItem("isObstacleMode", "false");
       setIsObstacleMode(false);
     }
+
   }, []);
 
   const handleClosePanel = () => {
