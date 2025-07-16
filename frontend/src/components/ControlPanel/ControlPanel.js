@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios';
 
 import { IoCloseSharp } from "react-icons/io5";
 
 
-function ControlPanel({ menuBtn, handleMenuBtnClick }) {
+function ControlPanel({ menuBtn, handleMenuBtnClick, isMarkeMode, isObstacleMode, setIsMarkeMode, setIsObstacleMode }) {
   const [showPanel, setShowPanel] = useState(false);
-  const [isMarkeMode, setIsMarkeMode] = useState(true);
-  const [isObstacleMode, setIsObstacleMode] = useState(false);
+
 
   useEffect(() => {
     if (menuBtn === "controls") {
@@ -18,40 +16,7 @@ function ControlPanel({ menuBtn, handleMenuBtnClick }) {
   }, [menuBtn]);
 
 
-  useEffect(() => {
-    if (sessionStorage.getItem("isMarkeMode")) {
-      setIsMarkeMode(sessionStorage.getItem("isMarkeMode") === "true");
-      fetch("http://127.0.0.1:5000/options/marker", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({ isMarkeMode: sessionStorage.getItem("isMarkeMode") === "true" }),
-
-      })
-    }
-    else {
-      sessionStorage.setItem("isMarkeMode", "true");
-    }
-
-    if (sessionStorage.getItem("isObstacleMode")) {
-      setIsObstacleMode(sessionStorage.getItem("isObstacleMode") === "true");
-        fetch("http://127.0.0.1:5000/options/obstacle", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({ isObstacleMode: sessionStorage.getItem("isObstacleMode") === "true" }),
-
-      })
-    }
-    else {
-      sessionStorage.setItem("isObstacleMode", "false");
-      setIsObstacleMode(false);
-    }
-
-  }, []);
-
+  
   const handleClosePanel = () => {
     setShowPanel(false);
     handleMenuBtnClick("");
