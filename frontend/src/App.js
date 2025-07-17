@@ -7,17 +7,72 @@ import StatusBar from './components/StatusBar/StatusBar';
 
 function App() {
   const [menuBtn, setMenuBtn] = useState("");
+  const [mapSrc, setMapSrc] = useState("http://127.0.0.1:5000/map");
   const [isMarkeMode, setIsMarkeMode] = useState(true);
   const [isObstacleMode, setIsObstacleMode] = useState(false);
+  const [isMapLoading, setIsMapLoading] = useState(false);
 
   const handleMenuBtnClick = (value) => {
     if (value === menuBtn) {
       value = "";
     }
-
     setMenuBtn(value)
   };
 
+
+  const handleCreatePath = () => {
+    setIsMapLoading(true);
+    fetch("http://127.0.0.1:5000/path/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    })
+    .then(response=>{
+      if (response.ok) {
+        const timestamp = new Date().getTime();
+        setMapSrc(`http://127.0.0.1:5000/map?t=${timestamp}`);
+      } else {
+        setIsMapLoading(false);
+        throw new Error('Network response was not ok');
+      }
+    })
+    .catch(error => {
+      setIsMapLoading(false);
+      console.error('Error creating path:', error);
+    });
+  };
+
+  const handleClearMap = () => {
+    setIsMapLoading(true);
+    fetch("http://127.0.0.1:5000/path/clear", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    })
+    .then(response => {
+      if (response.ok) {
+        const timestamp = new Date().getTime();
+        setMapSrc(`http://127.0.0.1:5000/map?t=${timestamp}`);
+      } else {
+        setIsMapLoading(false);
+        throw new Error('Network response was not ok');
+      }
+    })
+    .catch(error => {
+      setIsMapLoading(false);
+      console.error('Error clearing map:', error);
+    });
+  };
+
+
+
+  useEffect(() => {
+    if (mapSrc.includes('?t=')) {
+      setIsMapLoading(true);
+    }
+  }, [mapSrc]);
 
   useEffect(() => {
     if (sessionStorage.getItem("isMarkeMode")) {
@@ -37,7 +92,7 @@ function App() {
 
     if (sessionStorage.getItem("isObstacleMode")) {
       setIsObstacleMode(sessionStorage.getItem("isObstacleMode") === "true");
-        fetch("http://127.0.0.1:5000/options/obstacle", {
+      fetch("http://127.0.0.1:5000/options/obstacle", {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -53,12 +108,11 @@ function App() {
 
   }, []);
 
-
   return (
     <div className="App">
-      <StatusBar isMarkeMode={isMarkeMode} isObstacleMode={isObstacleMode} />
+      <StatusBar isMarkeMode={isMarkeMode} isObstacleMode={isObstacleMode} pathCreateFunction={handleCreatePath} clearMapFunction={handleClearMap} />
       <TopMenu handleMenuBtnClick={handleMenuBtnClick} />
-      <Map />
+      <Map mapSrc={mapSrc} isMapLoading={isMapLoading} setIsMapLoading={setIsMapLoading} />
       <ControlPanel menuBtn={menuBtn} handleMenuBtnClick={handleMenuBtnClick} isMarkeMode={isMarkeMode}
         isObstacleMode={isObstacleMode} setIsMarkeMode={setIsMarkeMode} setIsObstacleMode={setIsObstacleMode} />
     </div>

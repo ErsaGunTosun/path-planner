@@ -5,11 +5,6 @@ function TopMenu({handleMenuBtnClick}) {
   return (
     <div className="top-menu fixed top-5 right-5 z-50 flex flex-col gap-2">
 
-    <button onClick={() => handleMenuBtnClick("statistic")} 
-    className="menu-button w-12 h-12 bg-white cursor-pointer flex justify-center items-center rounded-full">
-      <FaChartSimple className="text-xl" />
-    </button>
-
     <button onClick={() => handleMenuBtnClick("controls")}
     className="menu-button w-12 h-12 bg-white cursor-pointer flex justify-center items-center rounded-full">
       <FaGear className="text-xl" />

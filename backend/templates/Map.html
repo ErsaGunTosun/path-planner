@@ -95,37 +95,49 @@
     tile_layer_dda35a9549bfa503ea7e6d238014b747.addTo(map_10d8ba379c84a8a32988e7436c041a4b);
     
     const markers = {{ markers | tojson }};
+    const pathData = {{ path_data | tojson }};
     
-        if (markers.length > 0) {
-            markers.forEach(marker => {
-              if (marker.status == 'marker'){
-                  var icon = L.AwesomeMarkers.icon(
-                  {
+    if (markers.length > 0) {
+        markers.forEach(marker => {
+            if (marker.status == 'marker'){
+                var icon = L.AwesomeMarkers.icon(
+                {
                     "markerColor": "blue",
                     "iconColor": "white",
                     "prefix": "glyphicon",
                     "extraClasses": "fa-rotate-0",
                     "icon": "ok-sign"
-                  });
+                });
                 L.marker([marker.lat, marker.lon],{icon: icon})
                     .addTo(map_10d8ba379c84a8a32988e7436c041a4b);
-              }
-              else{ 
-                  var icon = L.AwesomeMarkers.icon(
-                  {
+            }
+            else{ 
+                var icon = L.AwesomeMarkers.icon(
+                {
                     "markerColor": "red",
                     "iconColor": "white",
                     "prefix": "glyphicon",
                     "extraClasses": "fa-rotate-0",
                     "icon": "ok-sign"
-                  });
+                });
                 
-                  L.marker([marker.lat, marker.lon], {icon: icon})
+                L.marker([marker.lat, marker.lon], {icon: icon})
                     .addTo(map_10d8ba379c84a8a32988e7436c041a4b)
                     .bindPopup(marker.status);
-              }
-            });
-      }
+            }
+        });
+    }
+
+    // Display path data if it exists
+    if (pathData && pathData.edges) {
+        pathData.edges.forEach(edge => {
+            L.polyline(edge, {
+                color: 'red',
+                weight: 3,
+                opacity: 0.7
+            }).addTo(map_10d8ba379c84a8a32988e7436c041a4b);
+        });
+    }
 
     function map_click_event(e) {
         let latitude = e.latlng.lat.toFixed(4);
