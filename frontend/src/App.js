@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Map from './components/Map/Map';
 import TopMenu from './components/TopMenu/TopMenu';
 import ControlPanel from './components/ControlPanel/ControlPanel';
+import BookmarksPanel from './components/BookmarksPanel/BookmarksPanel';
 import StatusBar from './components/StatusBar/StatusBar';
 
 function App() {
@@ -28,19 +29,19 @@ function App() {
         "Content-Type": "application/x-www-form-urlencoded",
       },
     })
-    .then(response=>{
-      if (response.ok) {
-        const timestamp = new Date().getTime();
-        setMapSrc(`http://127.0.0.1:5000/map?t=${timestamp}`);
-      } else {
+      .then(response => {
+        if (response.ok) {
+          const timestamp = new Date().getTime();
+          setMapSrc(`http://127.0.0.1:5000/map?t=${timestamp}`);
+        } else {
+          setIsMapLoading(false);
+          throw new Error('Network response was not ok');
+        }
+      })
+      .catch(error => {
         setIsMapLoading(false);
-        throw new Error('Network response was not ok');
-      }
-    })
-    .catch(error => {
-      setIsMapLoading(false);
-      console.error('Error creating path:', error);
-    });
+        console.error('Error creating path:', error);
+      });
   };
 
   const handleClearMap = () => {
@@ -51,19 +52,19 @@ function App() {
         "Content-Type": "application/x-www-form-urlencoded",
       },
     })
-    .then(response => {
-      if (response.ok) {
-        const timestamp = new Date().getTime();
-        setMapSrc(`http://127.0.0.1:5000/map?t=${timestamp}`);
-      } else {
+      .then(response => {
+        if (response.ok) {
+          const timestamp = new Date().getTime();
+          setMapSrc(`http://127.0.0.1:5000/map?t=${timestamp}`);
+        } else {
+          setIsMapLoading(false);
+          throw new Error('Network response was not ok');
+        }
+      })
+      .catch(error => {
         setIsMapLoading(false);
-        throw new Error('Network response was not ok');
-      }
-    })
-    .catch(error => {
-      setIsMapLoading(false);
-      console.error('Error clearing map:', error);
-    });
+        console.error('Error clearing map:', error);
+      });
   };
 
 
@@ -115,6 +116,7 @@ function App() {
       <Map mapSrc={mapSrc} isMapLoading={isMapLoading} setIsMapLoading={setIsMapLoading} />
       <ControlPanel menuBtn={menuBtn} handleMenuBtnClick={handleMenuBtnClick} isMarkeMode={isMarkeMode}
         isObstacleMode={isObstacleMode} setIsMarkeMode={setIsMarkeMode} setIsObstacleMode={setIsObstacleMode} />
+      <BookmarksPanel menuBtn={menuBtn} handleMenuBtnClick={handleMenuBtnClick} />
     </div>
   );
 }
