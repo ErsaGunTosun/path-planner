@@ -24,6 +24,9 @@ class PathPlanner:
         G = ox.graph_from_point(center_point, dist=radius, network_type='drive')
         
         return G
+        
+    def CreateMapWithPlygon(self,points):
+        pass
     
     def CreatePathWithPoint(self,point1, point2):
 

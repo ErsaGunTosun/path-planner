@@ -1,8 +1,6 @@
 from flask import Flask, render_template, request,make_response,jsonify
 from flask_cors import CORS
 from planner.PathPlanner import PathPlanner
-import osmnx as ox
-import networkx as nx
 
 all_markers = [{'lat': 40.98765, 'lon': 29.05748,'status':'marker'}]
 
@@ -31,9 +29,7 @@ def create_path():
         if marker['status'] == 'marker':
             marker_count += 1
             markers.append(marker)
-    
-    print(marker_count)
-    print(markers)
+
     if marker_count == 2:
         planner = PathPlanner()
         source_destination= [markers[0]["lat"],markers[0]["lon"] ]
