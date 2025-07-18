@@ -1,14 +1,11 @@
-from planner.Path import Path
 from flask import Flask, render_template, request,make_response,jsonify
 from flask_cors import CORS
-import math
-import osmnx as ox
-import networkx as nx
-import folium
+from planner.PathPlanner import PathPlanner
 
 all_markers = [{'lat': 40.98765, 'lon': 29.05748,'status':'marker'}]
 
 path_data = None
+
 
 options = {
     "is_addMarker" : True,
@@ -37,27 +34,17 @@ def create_path():
     print(marker_count)
     print(markers)
     if marker_count == 2:
-        center_lat = (markers[0]["lat"] + markers[1]["lat"] ) / 2
-        center_lon = (markers[0]["lon"]  + markers[1]["lon"] ) / 2
-        center_point = (center_lat, center_lon)
-
-        distance_between_points = haversine_distance(markers[0]["lat"], markers[0]["lon"], markers[1]["lat"], markers[1]["lon"])
-        radius = distance_between_points * 0.7  
-        if radius < 500: 
-            radius = 500
-        
+        planner = PathPlanner()
         source_destination= [markers[0]["lat"],markers[0]["lon"] ]
         target_destionation = [markers[1]["lat"], markers[1]["lon"]]
+        G = planner.CreateMapWith2Point(source_destination,target_destionation)
 
-        G = ox.graph_from_point(center_point, dist=radius, network_type='drive')
+        # Merkez noktasını hesapla
+        center_lat = (markers[0]["lat"] + markers[1]["lat"]) / 2
+        center_lon = (markers[0]["lon"] + markers[1]["lon"]) / 2
         
-        gdf_edges = ox.graph_to_gdfs(G, nodes=False, edges=True)
-        
-        path_edges = []
-        for idx, edge in gdf_edges.iterrows():
-            coordinates = [[point[1], point[0]] for point in edge.geometry.coords]
-            path_edges.append(coordinates)
-        
+        path_edges = planner.GetEdges(G)
+
         path_data = {
             'edges': path_edges,
             'center_lat': center_lat,
@@ -103,7 +90,7 @@ def change_center():
     if request.method == 'POST':
         lat = float(request.form['lat'])
         lon = float(request.form['lon'])
-        options["center_map"] = {lat,lon}
+        options["center_map"] = {"lat": lat, "lon": lon}
         return make_response(jsonify({"message": "center change operation is succes", "status": "success"}), 200)
     
     return make_response(jsonify({"message":"...","status":"errror"}),500)
@@ -127,15 +114,7 @@ def options_obstacle():
 
         return make_response(jsonify({"message": "center change operation is succes", "status": "success"}), 200)
 
-def haversine_distance(lat1, lon1, lat2, lon2):
-    R = 6371000 
-    lat1_rad, lon1_rad = math.radians(lat1), math.radians(lon1)
-    lat2_rad, lon2_rad = math.radians(lat2), math.radians(lon2)
-    dlon = lon2_rad - lon1_rad
-    dlat = lat2_rad - lat1_rad
-    a = math.sin(dlat / 2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    return R * c
+
 
 if __name__ == "__main__":
     app.run()
