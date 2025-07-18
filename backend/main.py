@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request,make_response,jsonify
 from flask_cors import CORS
 from planner.PathPlanner import PathPlanner
+import osmnx as ox
+import networkx as nx
 
 all_markers = [{'lat': 40.98765, 'lon': 29.05748,'status':'marker'}]
 
 path_data = None
-
 
 options = {
     "is_addMarker" : True,
@@ -37,13 +38,11 @@ def create_path():
         planner = PathPlanner()
         source_destination= [markers[0]["lat"],markers[0]["lon"] ]
         target_destionation = [markers[1]["lat"], markers[1]["lon"]]
-        G = planner.CreateMapWith2Point(source_destination,target_destionation)
+       
+        path_edges = planner.CreatePathWithPoint(source_destination,target_destionation)
 
-        # Merkez noktasını hesapla
         center_lat = (markers[0]["lat"] + markers[1]["lat"]) / 2
         center_lon = (markers[0]["lon"] + markers[1]["lon"]) / 2
-        
-        path_edges = planner.GetEdges(G)
 
         path_data = {
             'edges': path_edges,

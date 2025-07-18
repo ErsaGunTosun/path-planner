@@ -24,6 +24,35 @@ class PathPlanner:
         G = ox.graph_from_point(center_point, dist=radius, network_type='drive')
         
         return G
+    
+    def CreatePathWithPoint(self,point1, point2):
+
+        G = self.CreateMapWith2Point(point1,point2)
+
+        orig_node, dist_to_orig = ox.distance.nearest_nodes(G, point1[1],point1[0], return_dist=True)
+        dest_node, dist_to_dest = ox.distance.nearest_nodes(G, point2[1], point2[0], return_dist=True)
+
+        route = nx.shortest_path(G, source=orig_node, target=dest_node, weight='length')
+        G_route = nx.MultiDiGraph()
+        G_route.graph = G.graph.copy()
+
+        for node_id in route:
+            if node_id in G:
+                G_route.add_node(node_id, **G.nodes[node_id])
+
+        for i in range(len(route) - 1):
+            u = route[i]
+            v = route[i+1]
+            edge_data = G.get_edge_data(u, v)
+
+            if edge_data:
+                first_key = list(edge_data.keys())[0]
+                edge_attrs = edge_data[first_key]
+                G_route.add_edge(u, v, key=first_key, **edge_attrs)
+
+        path_edges = self.GetEdges(G_route)
+        
+        return path_edges
         
     def DrawMap(self,G,m,color="blue",size=3):
         gdf_edges = ox.graph_to_gdfs(G, nodes=False, edges=True)
