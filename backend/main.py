@@ -2,7 +2,7 @@ from flask import Flask, render_template, request,make_response,jsonify
 from flask_cors import CORS
 from planner.PathPlanner import PathPlanner
 
-all_markers = [{'lat': 40.98765, 'lon': 29.05748,'status':'marker'}]
+all_markers = []
 
 path_data = None
 
@@ -49,6 +49,64 @@ def create_path():
         return make_response(jsonify({"message": "Path created successfully", "status": "success"}), 200)
     else:
         return make_response(jsonify({"message": "Need exactly 2 markers to create path", "status": "error"}), 400)
+
+@app.route("/path/create_astar",methods=['POST'])
+def create_astar_path():
+    global path_data
+    marker_count = 0
+    markers = []
+    
+    for marker in all_markers:
+        if marker['status'] == 'marker':
+            marker_count += 1
+            markers.append(marker)
+
+    if marker_count >= 2:
+        planner = PathPlanner()
+        
+        marker_coords = []
+        for marker in markers:
+            marker_coords.append((marker["lat"], marker["lon"]))
+        
+        try:
+            path_edges = planner.CreatePathWithAStar(marker_coords)
+            
+            if path_edges:
+                total_lat = sum(marker["lat"] for marker in markers)
+                total_lon = sum(marker["lon"] for marker in markers)
+                center_lat = total_lat / len(markers)
+                center_lon = total_lon / len(markers)
+
+                path_data = {
+                    'edges': path_edges,
+                    'center_lat': center_lat,
+                    'center_lon': center_lon,
+                    'marker_count': marker_count,
+                    'algorithm': 'A*'
+                }
+                
+                return make_response(jsonify({
+                    "message": f"A* multi-marker path created successfully through {marker_count} markers", 
+                    "status": "success",
+                    "segments": marker_count - 1,
+                    "algorithm": "A* with Haversine heuristic"
+                }), 200)
+            else:
+                return make_response(jsonify({
+                    "message": "Could not create A* path between markers", 
+                    "status": "error"
+                }), 400)
+                
+        except Exception as e:
+            return make_response(jsonify({
+                "message": f"Error creating A* multi-marker path: {str(e)}", 
+                "status": "error"
+            }), 500)
+    else:
+        return make_response(jsonify({
+            "message": f"Need at least 2 markers to create path. Currently have {marker_count} markers", 
+            "status": "error"
+        }), 400)
 
 @app.route("/path/clear",methods=['POST'])
 def clear_path():

@@ -1,6 +1,6 @@
 import React from 'react'
 
-function StatusBar({ isMarkeMode, isObstacleMode, pathCreateFunction, clearMapFunction }) {
+function StatusBar({ isMarkeMode, isObstacleMode, pathCreateFunction, astarPathCreateFunction, clearMapFunction }) {
 
 
 
@@ -8,9 +8,9 @@ function StatusBar({ isMarkeMode, isObstacleMode, pathCreateFunction, clearMapFu
         <div className="status-bar fixed z-50 left-12 top-5 flex gap-2">
 
             <button
-                className="flex items-center space-x-2 px-3 py-2 rounded-full bg-white hover:bg-gray-100 "
-                onClick={pathCreateFunction}>
-                <span className="text-gray-800 text-sm font-medium whitespace-nowrap">Create Path
+                className="flex items-center space-x-2 px-3 py-2 rounded-full text-green-500 bg-white "
+                onClick={astarPathCreateFunction}>
+                <span className="text-sm font-medium whitespace-nowrap">Create Path
                 </span>
             </button>
 
@@ -21,6 +21,11 @@ function StatusBar({ isMarkeMode, isObstacleMode, pathCreateFunction, clearMapFu
                 </span>
             </button>
 
+            <button
+                className="flex items-center space-x-2 px-3 py-2 rounded-full bg-white hover:bg-gray-100 ">
+                <span className="text-gray-800 text-sm font-medium whitespace-nowrap">Save Path
+                </span>
+            </button>
 
             <p
                 className="flex items-center space-x-2 px-3 py-2 rounded-full bg-white">
@@ -33,12 +38,6 @@ function StatusBar({ isMarkeMode, isObstacleMode, pathCreateFunction, clearMapFu
                     </span>
                 </span>
             </p>
-
-            <button
-                className="flex items-center space-x-2 px-3 py-2 rounded-full bg-white hover:bg-gray-100 ">
-                <span className="text-gray-800 text-sm font-medium whitespace-nowrap">Save Path
-                </span>
-            </button>
 
         </div>
     )
