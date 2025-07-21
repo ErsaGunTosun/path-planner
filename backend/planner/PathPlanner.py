@@ -126,8 +126,10 @@ class PathPlanner:
                     v_coords = (G.nodes[v]['y'], G.nodes[v]['x'])
                     return haversine_distance(u_coords, v_coords)
                 
-                route = nx.astar_path(G, source=orig_node, target=dest_node, 
-                                    heuristic=heuristic, weight='length')
+                route = astar_algorithm(G, orig_node, dest_node, heuristic)
+
+                if not route:
+                    return []
                 
                 G_route = nx.MultiDiGraph()
                 G_route.graph = G.graph.copy()
@@ -153,6 +155,7 @@ class PathPlanner:
                 total_distance += segment_distance
                 
             except Exception as e:
+                print(f" Custom A* Error: {str(e)}")
                 continue
         
         return all_path_edges
@@ -177,3 +180,69 @@ def haversine_distance(point1, point2):
     a = math.sin(dlat / 2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2)**2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
+
+def astar_algorithm(G, start_node, goal_node, heuristic_func=None):
+    import heapq
+    
+    open_list = []  
+    closed_list = set()
+    
+    g_scores = {start_node: 0}      
+    f_scores = {start_node: 0}
+    parent = {}
+    
+
+    if heuristic_func is None:
+        def heuristic_func(node1, node2):
+            coords1 = (G.nodes[node1]['y'], G.nodes[node1]['x'])
+            coords2 = (G.nodes[node2]['y'], G.nodes[node2]['x'])
+            return haversine_distance(coords1, coords2)
+
+    h_start = heuristic_func(start_node, goal_node)
+    f_scores[start_node] = h_start
+    heapq.heappush(open_list, (h_start, start_node))
+    
+    while open_list:
+        current_f, current_node = heapq.heappop(open_list)
+        
+        if current_node == goal_node:
+            return reconstruct_path(parent, current_node)
+        
+        closed_list.add(current_node)
+        
+        for neighbor in G.neighbors(current_node):
+            if neighbor in closed_list:
+                continue
+            
+            edge_data = G.get_edge_data(current_node, neighbor)
+            if edge_data:
+                first_key = list(edge_data.keys())[0]
+                edge_weight = edge_data[first_key].get('length', 1)
+            else:
+                edge_weight = 1
+            
+            tentative_g = g_scores[current_node] + edge_weight
+            
+            if neighbor not in g_scores:
+                g_scores[neighbor] = float('inf')
+            
+            if tentative_g < g_scores[neighbor]:
+                parent[neighbor] = current_node
+                g_scores[neighbor] = tentative_g
+                
+                h_score = heuristic_func(neighbor, goal_node)
+                f_score = tentative_g + h_score
+                f_scores[neighbor] = f_score
+                
+                heapq.heappush(open_list, (f_score, neighbor))
+    
+    return []
+
+def reconstruct_path(parent, current_node):
+    path = []
+    while current_node is not None:
+        path.append(current_node)
+        current_node = parent.get(current_node)
+    
+    path.reverse()
+    return path
