@@ -54,12 +54,17 @@ def create_path():
 def create_astar_path():
     global path_data
     marker_count = 0
+    obstacle_count = 0
     markers = []
+    obstacles = []
     
     for marker in all_markers:
         if marker['status'] == 'marker':
             marker_count += 1
             markers.append(marker)
+        elif marker['status'] == 'obstacle':
+            obstacle_count += 1
+            obstacles.append(marker)
 
     if marker_count >= 2:
         planner = PathPlanner()
@@ -68,8 +73,13 @@ def create_astar_path():
         for marker in markers:
             marker_coords.append((marker["lat"], marker["lon"]))
         
+        # Prepare obstacle coordinates if any exist
+        obstacle_coords = None
+        if obstacles:
+            obstacle_coords = [(obs["lat"], obs["lon"]) for obs in obstacles]
+        
         try:
-            path_edges = planner.CreatePathWithAStar(marker_coords)
+            path_edges = planner.CreatePathWithAStar(marker_coords, obstacle_coords)
             
             if path_edges:
                 total_lat = sum(marker["lat"] for marker in markers)
@@ -82,14 +92,17 @@ def create_astar_path():
                     'center_lat': center_lat,
                     'center_lon': center_lon,
                     'marker_count': marker_count,
-                    'algorithm': 'A*'
+                    'obstacle_count': obstacle_count,
+                    'algorithm': 'A* with obstacles'
                 }
                 
+                obstacle_message = f" while avoiding {obstacle_count} obstacles" if obstacle_count > 0 else ""
                 return make_response(jsonify({
-                    "message": f"A* multi-marker path created successfully through {marker_count} markers", 
+                    "message": f"A* multi-marker path created successfully through {marker_count} markers{obstacle_message}", 
                     "status": "success",
                     "segments": marker_count - 1,
-                    "algorithm": "A* with Haversine heuristic"
+                    "obstacles": obstacle_count,
+                    "algorithm": "A* with Haversine heuristic and obstacle avoidance"
                 }), 200)
             else:
                 return make_response(jsonify({

@@ -3,8 +3,50 @@ import osmnx as ox
 import networkx as nx
 import matplotlib.pyplot as plt
 import math
+from shapely.geometry import Point, LineString
 
 class PathPlanner:
+    def __init__(self):
+        self.obstacle_penalty = 10000
+    
+    def is_edge_near_obstacle(self, node1, node2, G, obstacle_points, obstacle_radius=100):
+        if not obstacle_points:
+            return False
+            
+        lat1, lon1 = G.nodes[node1]['y'], G.nodes[node1]['x']
+        lat2, lon2 = G.nodes[node2]['y'], G.nodes[node2]['x']
+        
+        edge_line = LineString([(lon1, lat1), (lon2, lat2)])
+        
+        radius_deg = obstacle_radius / 111000
+
+        for obs_lat, obs_lon in obstacle_points:
+            obs_point = Point(obs_lon, obs_lat)
+            obs_circle = obs_point.buffer(radius_deg)
+            
+            if edge_line.intersects(obs_circle):
+                return True
+                
+        return False
+    
+    def modify_graph_with_obstacles(self, G, obstacle_points, obstacle_radius=100):
+        if not obstacle_points:
+            return G
+            
+        G_modified = G.copy()
+        edges_to_modify = []
+        
+        for u, v, key in G_modified.edges(keys=True):
+            if self.is_edge_near_obstacle(u, v, G_modified, obstacle_points, obstacle_radius):
+                edges_to_modify.append((u, v, key))
+        
+        for u, v, key in edges_to_modify:
+            if G_modified.has_edge(u, v, key):
+                current_length = G_modified[u][v][key].get('length', 1000)
+                G_modified[u][v][key]['length'] = current_length + self.obstacle_penalty
+                
+        return G_modified
+
     def CreateMapWithName(self,name):
         self.G = ox.graph_from_place(name, network_type='drive')
         return G
@@ -105,11 +147,17 @@ class PathPlanner:
         except Exception as e:
             return self.CreateMapWith2Point(markers[0], markers[1])
     
-    def CreatePathWithAStar(self, markers):
+    def CreatePathWithAStar(self, markers, obstacle_points=None):
         if len(markers) < 2:
             return []
     
         G = self.CreateMapForAllMarkers(markers)
+        
+        if obstacle_points:
+            G_modified = self.modify_graph_with_obstacles(G, obstacle_points)
+        else:
+            G_modified = G
+        
         all_path_edges = []
         total_distance = 0
         
@@ -118,30 +166,31 @@ class PathPlanner:
             point2 = markers[i + 1]
             
             try:
-                orig_node = ox.distance.nearest_nodes(G, point1[1], point1[0])
-                dest_node = ox.distance.nearest_nodes(G, point2[1], point2[0])
+                orig_node = ox.distance.nearest_nodes(G_modified, point1[1], point1[0])
+                dest_node = ox.distance.nearest_nodes(G_modified, point2[1], point2[0])
                 
                 def heuristic(u, v):
-                    u_coords = (G.nodes[u]['y'], G.nodes[u]['x'])
-                    v_coords = (G.nodes[v]['y'], G.nodes[v]['x'])
+                    u_coords = (G_modified.nodes[u]['y'], G_modified.nodes[u]['x'])
+                    v_coords = (G_modified.nodes[v]['y'], G_modified.nodes[v]['x'])
                     return haversine_distance(u_coords, v_coords)
                 
-                route = astar_algorithm(G, orig_node, dest_node, heuristic)
+                route = astar_algorithm(G_modified, orig_node, dest_node, heuristic)
 
                 if not route:
-                    return []
+                    print(f"No path found between waypoints {i} and {i+1}, possibly due to obstacles")
+                    continue
                 
                 G_route = nx.MultiDiGraph()
-                G_route.graph = G.graph.copy()
+                G_route.graph = G_modified.graph.copy()
                 
                 for node_id in route:
-                    if node_id in G:
-                        G_route.add_node(node_id, **G.nodes[node_id])
+                    if node_id in G_modified:
+                        G_route.add_node(node_id, **G_modified.nodes[node_id])
                 
                 for j in range(len(route) - 1):
                     u = route[j]
                     v = route[j+1]
-                    edge_data = G.get_edge_data(u, v)
+                    edge_data = G_modified.get_edge_data(u, v)
                     
                     if edge_data:
                         first_key = list(edge_data.keys())[0]
