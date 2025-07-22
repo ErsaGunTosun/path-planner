@@ -73,7 +73,6 @@ def create_astar_path():
         for marker in markers:
             marker_coords.append((marker["lat"], marker["lon"]))
         
-        # Prepare obstacle coordinates if any exist
         obstacle_coords = None
         if obstacles:
             obstacle_coords = [(obs["lat"], obs["lon"]) for obs in obstacles]
@@ -180,6 +179,41 @@ def options_obstacle():
 
         return make_response(jsonify({"message": "center change operation is succes", "status": "success"}), 200)
 
+@app.route("/remove_marker", methods=['POST'])
+def remove_marker():
+    if request.method == 'POST':
+        try:
+            lat = float(request.form['lat'])
+            lon = float(request.form['lon'])
+            
+            # Find and remove the marker with matching coordinates
+            marker_to_remove = None
+            for i, marker in enumerate(all_markers):
+                # Check if coordinates match (with small tolerance for floating point comparison)
+                if abs(marker['lat'] - lat) == 0 and abs(marker['lon'] - lon) == 0:
+                    marker_to_remove = i
+                    break
+            
+            if marker_to_remove is not None:
+                removed_marker = all_markers.pop(marker_to_remove)
+                return make_response(jsonify({
+                    "message": "Marker removed successfully", 
+                    "status": "success",
+                    "removed_marker": removed_marker
+                }), 200)
+            else:
+                return make_response(jsonify({
+                    "message": "Marker not found", 
+                    "status": "error"
+                }), 404)
+                
+        except Exception as e:
+            return make_response(jsonify({
+                "message": f"Error removing marker: {str(e)}", 
+                "status": "error"
+            }), 500)
+    
+    return make_response(jsonify({"message": "Invalid request method", "status": "error"}), 405)
 
 
 if __name__ == "__main__":

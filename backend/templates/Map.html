@@ -96,9 +96,13 @@
     
     const markers = {{ markers | tojson }};
     const pathData = {{ path_data | tojson }};
+    const markerObjects = {};
     
     if (markers.length > 0) {
-        markers.forEach(marker => {
+        markers.forEach((marker, index) => {
+            let markerObj;
+            const markerId = `marker_${index}_${marker.lat}_${marker.lon}`;
+            
             if (marker.status == 'marker'){
                 var icon = L.AwesomeMarkers.icon(
                 {
@@ -108,8 +112,21 @@
                     "extraClasses": "fa-rotate-0",
                     "icon": "map-marker"
                 });
-                L.marker([marker.lat, marker.lon],{icon: icon})
-                    .addTo(map_10d8ba379c84a8a32988e7436c041a4b);
+                
+                const popupContent = 
+                    '<div>' +
+                        '<strong>Waypoint</strong><br>' +
+                        'Lat: ' + marker.lat.toFixed(4) + '<br>' +
+                        'Lon: ' + marker.lon.toFixed(4) + '<br>' +
+                        '<button onclick="removeMarker(' + marker.lat + ', ' + marker.lon + ', \'' + markerId + '\')" ' +
+                                'style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-top: 5px;">' +
+                            'Delete' +
+                        '</button>' +
+                    '</div>';
+                
+                markerObj = L.marker([marker.lat, marker.lon],{icon: icon})
+                    .addTo(map_10d8ba379c84a8a32988e7436c041a4b)
+                    .bindPopup(popupContent);
             }
             else{ 
                 var icon = L.AwesomeMarkers.icon(
@@ -121,14 +138,26 @@
                     "icon": "lock"
                 });
                 
-                L.marker([marker.lat, marker.lon], {icon: icon})
+                const popupContent = 
+                    '<div>' +
+                        '<strong>Engel</strong><br>' +
+                        'Lat: ' + marker.lat.toFixed(4) + '<br>' +
+                        'Lon: ' + marker.lon.toFixed(4) + '<br>' +
+                        '<button onclick="removeMarker(' + marker.lat + ', ' + marker.lon + ', \'' + markerId + '\')" ' +
+                                'style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-top: 5px;">' +
+                            'Delete' +
+                        '</button>' +
+                    '</div>';
+                
+                markerObj = L.marker([marker.lat, marker.lon], {icon: icon})
                     .addTo(map_10d8ba379c84a8a32988e7436c041a4b)
-                    .bindPopup(marker.status);
+                    .bindPopup(popupContent);
             }
+            
+            markerObjects[markerId] = markerObj;
         });
     }
 
-    // Display path data if it exists
     if (pathData && pathData.edges) {
         pathData.edges.forEach(edge => {
             L.polyline(edge, {
@@ -137,6 +166,34 @@
                 opacity: 0.7
             }).addTo(map_10d8ba379c84a8a32988e7436c041a4b);
         });
+    }
+
+    function removeMarker(lat, lon, markerId) {
+        if (confirm('Are you sure you want to delete this marker?')) {
+            fetch("http://127.0.0.1:5000/remove_marker", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: new URLSearchParams({ lat: lat, lon: lon }),
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (markerObjects[markerId]) {
+                        map_10d8ba379c84a8a32988e7436c041a4b.removeLayer(markerObjects[markerId]);
+                        delete markerObjects[markerId];
+                    }
+                    alert('Marker deleted successfully!');
+                } else {
+                    alert('Error deleting marker: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting marker!');
+            });
+        }
     }
 
     function map_click_event(e) {
@@ -158,6 +215,9 @@
           return res.json();
         })
         .then(data => {
+            const newMarkerId = 'marker_new_' + latitude + '_' + longitude;
+            let markerObj;
+            
             if(data.marker.status == 'marker'){
                 var icon = L.AwesomeMarkers.icon(
                   {
@@ -168,8 +228,20 @@
                     "icon": "map-marker"
                   });
 
-                L.marker([latitude,longitude],{icon: icon})
-                    .addTo(map_10d8ba379c84a8a32988e7436c041a4b);
+                const popupContent = 
+                    '<div>' +
+                        '<strong>Waypoint</strong><br>' +
+                        'Lat: ' + parseFloat(latitude).toFixed(4) + '<br>' +
+                        'Lon: ' + parseFloat(longitude).toFixed(4) + '<br>' +
+                        '<button onclick="removeMarker(' + latitude + ', ' + longitude + ', \'' + newMarkerId + '\')" ' +
+                                'style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-top: 5px;">' +
+                            'Delete' +
+                        '</button>' +
+                    '</div>';
+
+                markerObj = L.marker([latitude,longitude],{icon: icon})
+                    .addTo(map_10d8ba379c84a8a32988e7436c041a4b)
+                    .bindPopup(popupContent);
             }
             else if (data.marker.status == 'obstacle'){
                 var icon = L.AwesomeMarkers.icon(
@@ -181,9 +253,24 @@
                       "icon": "lock"
                   });
                 
-                L.marker([latitude, longitude], {icon: icon})
+                const popupContent = 
+                    '<div>' +
+                        '<strong>Obstacle</strong><br>' +
+                        'Lat: ' + parseFloat(latitude).toFixed(4) + '<br>' +
+                        'Lon: ' + parseFloat(longitude).toFixed(4) + '<br>' +
+                        '<button onclick="removeMarker(' + latitude + ', ' + longitude + ', \'' + newMarkerId + '\')" ' +
+                                'style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-top: 5px;">' +
+                            'Delete' +
+                        '</button>' +
+                    '</div>';
+                
+                markerObj = L.marker([latitude, longitude], {icon: icon})
                     .addTo(map_10d8ba379c84a8a32988e7436c041a4b)
-                    .bindPopup("obstacle");
+                    .bindPopup(popupContent);
+            }
+            
+            if (markerObj) {
+                markerObjects[newMarkerId] = markerObj;
             }
         });
 
