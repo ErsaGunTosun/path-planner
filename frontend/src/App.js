@@ -89,6 +89,11 @@ function App() {
       });
   };
 
+  const handleBookmarkLoad = () => {
+    const timestamp = new Date().getTime();
+    setMapSrc(`http://127.0.0.1:5000/map?t=${timestamp}`);
+  };
+
 
 
   useEffect(() => {
@@ -146,7 +151,7 @@ function App() {
       <Map mapSrc={mapSrc} isMapLoading={isMapLoading} setIsMapLoading={setIsMapLoading} />
       <ControlPanel menuBtn={menuBtn} handleMenuBtnClick={handleMenuBtnClick} isMarkeMode={isMarkeMode}
         isObstacleMode={isObstacleMode} setIsMarkeMode={setIsMarkeMode} setIsObstacleMode={setIsObstacleMode} />
-      <BookmarksPanel menuBtn={menuBtn} handleMenuBtnClick={handleMenuBtnClick} />
+      <BookmarksPanel menuBtn={menuBtn} handleMenuBtnClick={handleMenuBtnClick} onBookmarkLoad={handleBookmarkLoad} />
     </div>
   );
 }

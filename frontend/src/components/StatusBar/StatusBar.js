@@ -21,12 +21,6 @@ function StatusBar({ isMarkeMode, isObstacleMode, pathCreateFunction, astarPathC
                 </span>
             </button>
 
-            <button
-                className="flex items-center space-x-2 px-3 py-2 rounded-full bg-white hover:bg-gray-100 ">
-                <span className="text-gray-800 text-sm font-medium whitespace-nowrap">Save Path
-                </span>
-            </button>
-
             <p
                 className="flex items-center space-x-2 px-3 py-2 rounded-full bg-white">
                 <span className="text-gray-800 text-sm font-medium whitespace-nowrap">Status

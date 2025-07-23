@@ -60,11 +60,11 @@
     <div class="folium-map" id="map_10d8ba379c84a8a32988e7436c041a4b"></div>
   </body>
   <script>
-    
+    const center = {{ center_map | tojson }};
     var map_10d8ba379c84a8a32988e7436c041a4b = L.map(
         "map_10d8ba379c84a8a32988e7436c041a4b",
         {
-            center: [40.98235397234183, 29.05953843050679],
+            center: [center.lat, center.lon],
             crs: L.CRS.EPSG3857,
             ...{
                 "zoom": 15,

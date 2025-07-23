@@ -1,15 +1,38 @@
 from flask import Flask, render_template, request,make_response,jsonify
 from flask_cors import CORS
 from planner.PathPlanner import PathPlanner
+import json
+import os
+from datetime import datetime
 
 all_markers = []
 
 path_data = None
 
+bookmarks_file = 'bookmarks.json'
+bookmarks = []
+
+def load_bookmarks():
+    global bookmarks
+    if os.path.exists(bookmarks_file):
+        try:
+            with open(bookmarks_file, 'r', encoding='utf-8') as f:
+                bookmarks = json.load(f)
+        except:
+            bookmarks = []
+    else:
+        bookmarks = []
+
+def save_bookmarks():
+    with open(bookmarks_file, 'w', encoding='utf-8') as f:
+        json.dump(bookmarks, f, indent=2, ensure_ascii=False)
+
+load_bookmarks()
+
 options = {
     "is_addMarker" : True,
     "is_addObstacle": False,
-    "center_map":{"lat":40.98235397234183, "lng":29.05953843050679}
+    "center_map":{"lat":40.98235397234183, "lon":29.05953843050679}
 }
 
 app = Flask(__name__)
@@ -17,7 +40,7 @@ CORS(app)
 
 @app.route("/map")
 def map():
-    return render_template('Map.html', markers=all_markers, path_data=path_data)
+    return render_template('Map.html', markers=all_markers, path_data=path_data,center_map=options["center_map"])
 
 @app.route("/path/create",methods=['POST'])
 def create_path():
@@ -186,10 +209,8 @@ def remove_marker():
             lat = float(request.form['lat'])
             lon = float(request.form['lon'])
             
-            # Find and remove the marker with matching coordinates
             marker_to_remove = None
             for i, marker in enumerate(all_markers):
-                # Check if coordinates match (with small tolerance for floating point comparison)
                 if abs(marker['lat'] - lat) == 0 and abs(marker['lon'] - lon) == 0:
                     marker_to_remove = i
                     break
@@ -215,6 +236,115 @@ def remove_marker():
     
     return make_response(jsonify({"message": "Invalid request method", "status": "error"}), 405)
 
+@app.route("/bookmark/save",methods=['POST'])
+def bookmark_save():
+    global bookmarks
+    try:
+        bookmark_name = request.form.get('name', f'Route_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
+        
+        if not all_markers:
+            return make_response(jsonify({
+                "message": "No markers to save", 
+                "status": "error"
+            }), 400)
+            
+        if not path_data:
+            return make_response(jsonify({
+                "message": "No path data to save", 
+                "status": "error"
+            }), 400)
+        
+        bookmark = {
+            "id": len(bookmarks) + 1,
+            "name": bookmark_name,
+            "created_at": datetime.now().isoformat(),
+            "markers": all_markers.copy(),
+            "path_data": path_data.copy(),
+            "marker_count": sum(1 for m in all_markers if m['status'] == 'marker'),
+            "obstacle_count": sum(1 for m in all_markers if m['status'] == 'obstacle')
+        }
+        
+        bookmarks.append(bookmark)
+        save_bookmarks()
+        
+        return make_response(jsonify({
+            "message": f"Route '{bookmark_name}' saved successfully", 
+            "status": "success",
+            "bookmark": bookmark
+        }), 200)
+        
+    except Exception as e:
+        return make_response(jsonify({
+            "message": f"Error saving bookmark: {str(e)}", 
+            "status": "error"
+        }), 500)
+
+@app.route("/bookmarks/list", methods=['GET'])
+def bookmarks_list():
+    try:
+        return make_response(jsonify({
+            "bookmarks": bookmarks,
+            "count": len(bookmarks),
+            "status": "success"
+        }), 200)
+    except Exception as e:
+        return make_response(jsonify({
+            "message": f"Error loading bookmarks: {str(e)}", 
+            "status": "error"
+        }), 500)
+
+@app.route("/bookmark/load/<int:bookmark_id>", methods=['POST'])
+def bookmark_load(bookmark_id):
+    global all_markers, path_data
+    try:
+        bookmark = next((b for b in bookmarks if b['id'] == bookmark_id), None)
+        
+        if not bookmark:
+            return make_response(jsonify({
+                "message": "Bookmark not found", 
+                "status": "error"
+            }), 404)
+        
+        all_markers = bookmark['markers'].copy()
+        path_data = bookmark['path_data'].copy()
+        
+        return make_response(jsonify({
+            "message": f"Route '{bookmark['name']}' loaded successfully", 
+            "status": "success",
+            "bookmark": bookmark
+        }), 200)
+        
+    except Exception as e:
+        return make_response(jsonify({
+            "message": f"Error loading bookmark: {str(e)}", 
+            "status": "error"
+        }), 500)
+
+@app.route("/bookmark/delete/<int:bookmark_id>", methods=['DELETE'])
+def bookmark_delete(bookmark_id):
+    global bookmarks
+    try:
+        bookmark_to_remove = next((i for i, b in enumerate(bookmarks) if b['id'] == bookmark_id), None)
+        
+        if bookmark_to_remove is None:
+            return make_response(jsonify({
+                "message": "Bookmark not found", 
+                "status": "error"
+            }), 404)
+        
+        removed_bookmark = bookmarks.pop(bookmark_to_remove)
+        save_bookmarks()
+        
+        return make_response(jsonify({
+            "message": f"Route '{removed_bookmark['name']}' deleted successfully", 
+            "status": "success"
+        }), 200)
+        
+    except Exception as e:
+        return make_response(jsonify({
+            "message": f"Error deleting bookmark: {str(e)}", 
+            "status": "error"
+        }), 500)
 
 if __name__ == "__main__":
     app.run()
