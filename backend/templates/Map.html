@@ -28,6 +28,84 @@
       .leaflet-container {
         font-size: 1rem;
       }
+      
+      /* Modal styles */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+      }
+      
+      .modal-content {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+      
+      .modal-header {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #333;
+      }
+      
+      .modal-message {
+        margin-bottom: 20px;
+        color: #666;
+        line-height: 1.4;
+      }
+      
+      .modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+      
+      .modal-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.2s;
+      }
+      
+      .modal-btn-cancel {
+        background: #f3f4f6;
+        color: #374151;
+      }
+      
+      .modal-btn-cancel:hover {
+        background: #e5e7eb;
+      }
+      
+      .modal-btn-confirm {
+        background: #dc2626;
+        color: white;
+      }
+      
+      .modal-btn-confirm:hover {
+        background: #b91c1c;
+      }
+      
+      .modal-btn-success {
+        background: #059669;
+        color: white;
+      }
+      
+      .modal-btn-success:hover {
+        background: #047857;
+      }
     </style>
 
     <style>
@@ -58,6 +136,18 @@
 
   <body>
     <div class="folium-map" id="map_10d8ba379c84a8a32988e7436c041a4b"></div>
+    
+    <!-- Modal -->
+    <div id="modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content">
+        <div id="modal-header" class="modal-header"></div>
+        <div id="modal-message" class="modal-message"></div>
+        <div class="modal-actions">
+          <button id="modal-cancel" class="modal-btn modal-btn-cancel" style="display: none;">Cancel</button>
+          <button id="modal-confirm" class="modal-btn modal-btn-confirm">OK</button>
+        </div>
+      </div>
+    </div>
   </body>
   <script>
     const center = {{ center_map | tojson }};
@@ -168,32 +258,84 @@
         });
     }
 
-    function removeMarker(lat, lon, markerId) {
-        if (confirm('Are you sure you want to delete this marker?')) {
-            fetch("http://127.0.0.1:5000/remove_marker", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body: new URLSearchParams({ lat: lat, lon: lon }),
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    if (markerObjects[markerId]) {
-                        map_10d8ba379c84a8a32988e7436c041a4b.removeLayer(markerObjects[markerId]);
-                        delete markerObjects[markerId];
-                    }
-                    alert('Marker deleted successfully!');
-                } else {
-                    alert('Error deleting marker: ' + data.message);
+    // Modal functions
+    function showModal(title, message, type = 'info', showCancel = false) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('modal');
+            const modalHeader = document.getElementById('modal-header');
+            const modalMessage = document.getElementById('modal-message');
+            const modalCancel = document.getElementById('modal-cancel');
+            const modalConfirm = document.getElementById('modal-confirm');
+            
+            modalHeader.textContent = title;
+            modalMessage.textContent = message;
+            
+            // Show/hide cancel button
+            modalCancel.style.display = showCancel ? 'block' : 'none';
+            
+            // Set button styles based on type
+            modalConfirm.className = 'modal-btn ' + 
+                (type === 'error' ? 'modal-btn-confirm' : 
+                 type === 'success' ? 'modal-btn-success' : 
+                 'modal-btn-confirm');
+            
+            modal.style.display = 'flex';
+            
+            // Handle confirm
+            modalConfirm.onclick = () => {
+                modal.style.display = 'none';
+                resolve(true);
+            };
+            
+            // Handle cancel
+            modalCancel.onclick = () => {
+                modal.style.display = 'none';
+                resolve(false);
+            };
+            
+            // Handle click outside modal
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                    resolve(false);
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error deleting marker!');
-            });
-        }
+            };
+        });
+    }
+
+    function removeMarker(lat, lon, markerId) {
+        showModal(
+            'Delete Marker',
+            'Are you sure you want to delete this marker?',
+            'warning',
+            true
+        ).then(confirmed => {
+            if (confirmed) {
+                fetch("http://127.0.0.1:5000/remove_marker", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    body: new URLSearchParams({ lat: lat, lon: lon }),
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        if (markerObjects[markerId]) {
+                            map_10d8ba379c84a8a32988e7436c041a4b.removeLayer(markerObjects[markerId]);
+                            delete markerObjects[markerId];
+                        }
+                        showModal('Success', 'Marker deleted successfully!', 'success');
+                    } else {
+                        showModal('Error', 'Error deleting marker: ' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showModal('Error', 'Error deleting marker!', 'error');
+                });
+            }
+        });
     }
 
     function map_click_event(e) {

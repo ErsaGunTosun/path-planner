@@ -1,7 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { IoTrashSharp } from "react-icons/io5";
+import Modal from '../Modal/Modal';
 
 function Bookmarks({ bookmark, onLoad, onDelete }) {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -13,10 +16,19 @@ function Bookmarks({ bookmark, onLoad, onDelete }) {
     }
   };
 
-  const handleDelete = () => {
-    if (onDelete && window.confirm(`Are you sure you want to delete "${bookmark.name}"?`)) {
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (onDelete) {
       onDelete(bookmark.id);
     }
+    setShowDeleteModal(false);
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
   };
 
   return (
@@ -38,12 +50,25 @@ function Bookmarks({ bookmark, onLoad, onDelete }) {
         <div className="bookmark-actions flex justify-between items-center gap-x-2 pt-2">
           <button 
             className="bookmark-delete-btn text-red-500 hover:text-red-700"
-            onClick={handleDelete}
+            onClick={handleDeleteClick}
           >
             <IoTrashSharp />
           </button>
         </div>
       </div>
+
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Delete Route"
+        message={`Are you sure you want to delete "${bookmark.name}"? This action cannot be undone.`}
+        type="warning"
+        confirmText="Delete"
+        cancelText="Cancel"
+        showCancel={true}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
     </>
   )
 }
