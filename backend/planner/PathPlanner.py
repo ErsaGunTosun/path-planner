@@ -209,6 +209,198 @@ class PathPlanner:
         
         return all_path_edges
 
+    def CreatePathWithDijkstra(self, markers, obstacle_points=None):
+        if len(markers) < 2:
+            return []
+    
+        G = self.CreateMapForAllMarkers(markers)
+        
+        if obstacle_points:
+            G_modified = self.modify_graph_with_obstacles(G, obstacle_points)
+        else:
+            G_modified = G
+        
+        all_path_edges = []
+        
+        for i in range(len(markers) - 1):
+            point1 = markers[i]
+            point2 = markers[i + 1]
+            
+            try:
+                orig_node = ox.distance.nearest_nodes(G_modified, point1[1], point1[0])
+                dest_node = ox.distance.nearest_nodes(G_modified, point2[1], point2[0])
+                
+                route = dijkstra_algorithm(G_modified, orig_node, dest_node)
+
+                if not route:
+                    print(f"No path found between waypoints {i} and {i+1}")
+                    continue
+                
+                G_route = nx.MultiDiGraph()
+                G_route.graph = G_modified.graph.copy()
+                
+                for node_id in route:
+                    if node_id in G_modified:
+                        G_route.add_node(node_id, **G_modified.nodes[node_id])
+                
+                for j in range(len(route) - 1):
+                    u = route[j]
+                    v = route[j+1]
+                    edge_data = G_modified.get_edge_data(u, v)
+                    
+                    if edge_data:
+                        first_key = list(edge_data.keys())[0]
+                        edge_attrs = edge_data[first_key]
+                        G_route.add_edge(u, v, key=first_key, **edge_attrs)
+                
+                path_edges = self.GetEdges(G_route)
+                all_path_edges.extend(path_edges)
+                
+            except Exception as e:
+                print(f"Dijkstra Error: {str(e)}")
+                continue
+        
+        return all_path_edges
+
+    def CreateAlternativeRoutes(self, markers, obstacle_points=None, main_route_edges=None):
+        if len(markers) < 2:
+            return []
+        
+        alternatives = []
+        
+        G = self.CreateMapForAllMarkers(markers)
+        
+        if obstacle_points:
+            G = self.modify_graph_with_obstacles(G, obstacle_points)
+        
+        # Simple Dijkstra alternative without penalty system
+        # Add slight random variation to edge weights to get different path
+        G_variant = G.copy()
+        
+        # Add small random variation (1-5%) to edge weights for alternative route
+        import random
+        random.seed(42)  # Fixed seed for consistent results
+        
+        for u, v, key in G_variant.edges(keys=True):
+            if 'length' in G_variant[u][v][key]:
+                original_length = G_variant[u][v][key]['length']
+                # Add 1-5% random variation
+                variation = random.uniform(0.01, 0.05)
+                G_variant[u][v][key]['length'] = original_length * (1 + variation)
+        
+        route1 = self._create_path_dijkstra_with_graph(markers, G_variant)
+        if route1 and len(route1) > 0:
+            alternatives.append({
+                'algorithm': 'Dijkstra Alternative',
+                'path': route1,
+            })
+              
+        return alternatives
+    
+    def _create_path_dijkstra_with_graph(self, markers, G):
+        all_path_edges = []
+        
+        for i in range(len(markers) - 1):
+            point1 = markers[i]
+            point2 = markers[i + 1]
+            
+            try:
+                orig_node = ox.distance.nearest_nodes(G, point1[1], point1[0])
+                dest_node = ox.distance.nearest_nodes(G, point2[1], point2[0])
+                
+                route = dijkstra_algorithm(G, orig_node, dest_node)
+
+                if not route:
+                    continue
+                
+                G_route = nx.MultiDiGraph()
+                G_route.graph = G.graph.copy()
+                
+                for node_id in route:
+                    if node_id in G:
+                        G_route.add_node(node_id, **G.nodes[node_id])
+                
+                for j in range(len(route) - 1):
+                    u = route[j]
+                    v = route[j+1]
+                    edge_data = G.get_edge_data(u, v)
+                    
+                    if edge_data:
+                        first_key = list(edge_data.keys())[0]
+                        edge_attrs = edge_data[first_key]
+                        G_route.add_edge(u, v, key=first_key, **edge_attrs)
+                
+                path_edges = self.GetEdges(G_route)
+                all_path_edges.extend(path_edges)
+                
+            except Exception as e:
+                continue
+        
+        return all_path_edges
+    
+    def CreatePathWithCustomHeuristic(self, markers, obstacle_points=None, heuristic_type='haversine'):
+        if len(markers) < 2:
+            return []
+    
+        G = self.CreateMapForAllMarkers(markers)
+        
+        if obstacle_points:
+            G_modified = self.modify_graph_with_obstacles(G, obstacle_points)
+        else:
+            G_modified = G
+        
+        all_path_edges = []
+        
+        for i in range(len(markers) - 1):
+            point1 = markers[i]
+            point2 = markers[i + 1]
+            
+            try:
+                orig_node = ox.distance.nearest_nodes(G_modified, point1[1], point1[0])
+                dest_node = ox.distance.nearest_nodes(G_modified, point2[1], point2[0])
+                
+                def custom_heuristic(u, v):
+                    u_coords = (G_modified.nodes[u]['y'], G_modified.nodes[u]['x'])
+                    v_coords = (G_modified.nodes[v]['y'], G_modified.nodes[v]['x'])
+                    
+                    if heuristic_type == 'manhattan':
+                        return abs(u_coords[0] - v_coords[0]) + abs(u_coords[1] - v_coords[1])
+                    elif heuristic_type == 'euclidean':
+                        import math
+                        return math.sqrt((u_coords[0] - v_coords[0])**2 + (u_coords[1] - v_coords[1])**2)
+                    else:
+                        return haversine_distance(u_coords, v_coords)
+                
+                route = astar_algorithm(G_modified, orig_node, dest_node, custom_heuristic)
+
+                if not route:
+                    continue
+                
+                G_route = nx.MultiDiGraph()
+                G_route.graph = G_modified.graph.copy()
+                
+                for node_id in route:
+                    if node_id in G_modified:
+                        G_route.add_node(node_id, **G_modified.nodes[node_id])
+                
+                for j in range(len(route) - 1):
+                    u = route[j]
+                    v = route[j+1]
+                    edge_data = G_modified.get_edge_data(u, v)
+                    
+                    if edge_data:
+                        first_key = list(edge_data.keys())[0]
+                        edge_attrs = edge_data[first_key]
+                        G_route.add_edge(u, v, key=first_key, **edge_attrs)
+                
+                path_edges = self.GetEdges(G_route)
+                all_path_edges.extend(path_edges)
+                
+            except Exception as e:
+                continue
+        
+        return all_path_edges
+
     def PrintMapFig(self,G,name="Map",color="red"):
         fig, ax = ox.plot_graph(G, figsize=(10, 10), 
                             edge_color=color,node_size=10,show=False,)
@@ -219,7 +411,6 @@ class PathPlanner:
         file_name = f"./templates/{name}.html"
         m.save(file_name)
     
-
 def haversine_distance(point1, point2):
     R = 6371000 
     lat1_rad, lon1_rad = math.radians(point1[0]), math.radians(point1[1])
@@ -295,3 +486,44 @@ def reconstruct_path(parent, current_node):
     
     path.reverse()
     return path
+
+def dijkstra_algorithm(G, start_node, goal_node):
+    import heapq
+    
+    distances = {node: float('inf') for node in G.nodes()}
+    distances[start_node] = 0
+    
+    priority_queue = [(0, start_node)]
+    parent = {}
+    visited = set()
+    
+    while priority_queue:
+        current_distance, current_node = heapq.heappop(priority_queue)
+        
+        if current_node in visited:
+            continue
+            
+        visited.add(current_node)
+        
+        if current_node == goal_node:
+            return reconstruct_path(parent, current_node)
+        
+        for neighbor in G.neighbors(current_node):
+            if neighbor in visited:
+                continue
+            
+            edge_data = G.get_edge_data(current_node, neighbor)
+            if edge_data:
+                first_key = list(edge_data.keys())[0]
+                edge_weight = edge_data[first_key].get('length', 1)
+            else:
+                edge_weight = 1
+            
+            distance = current_distance + edge_weight
+            
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                parent[neighbor] = current_node
+                heapq.heappush(priority_queue, (distance, neighbor))
+    
+    return []

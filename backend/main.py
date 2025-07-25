@@ -109,13 +109,25 @@ def create_astar_path():
                 center_lat = total_lat / len(markers)
                 center_lon = total_lon / len(markers)
 
+                try:
+                    alternatives = planner.CreateAlternativeRoutes(marker_coords, obstacle_coords)
+                    alternative_paths = []
+                    
+                    if alternatives and len(alternatives) > 0:
+                        alternative_paths.append(alternatives[0]['path'])
+                    
+                except Exception as e:
+                    print(f"Error generating alternatives: {e}")
+                    alternative_paths = []
+
                 path_data = {
                     'edges': path_edges,
                     'center_lat': center_lat,
                     'center_lon': center_lon,
                     'marker_count': marker_count,
                     'obstacle_count': obstacle_count,
-                    'algorithm': 'A* with obstacles'
+                    'algorithm': 'A* with obstacles',
+                    'alternatives': alternative_paths
                 }
                 
                 obstacle_message = f" while avoiding {obstacle_count} obstacles" if obstacle_count > 0 else ""
@@ -141,7 +153,7 @@ def create_astar_path():
         return make_response(jsonify({
             "message": f"Need at least 2 markers to create path. Currently have {marker_count} markers", 
             "status": "error"
-        }), 400)
+        }), 400)  
 
 @app.route("/path/clear",methods=['POST'])
 def clear_path():

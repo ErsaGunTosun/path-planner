@@ -252,13 +252,27 @@
         pathData.edges.forEach(edge => {
             L.polyline(edge, {
                 color: 'red',
-                weight: 3,
-                opacity: 0.7
+                weight: 4,
+                opacity: 0.8
             }).addTo(map_10d8ba379c84a8a32988e7436c041a4b);
         });
+        
+        if (pathData.alternatives && pathData.alternatives.length > 0) {
+            pathData.alternatives.forEach((altPath, index) => {
+                if (altPath && altPath.length > 0) {
+                    altPath.forEach(edge => {
+                        L.polyline(edge, {
+                            color: 'green',
+                            weight: 3,
+                            opacity: 1,
+                            dashArray: '5, 10'
+                        }).addTo(map_10d8ba379c84a8a32988e7436c041a4b);
+                    });
+                }
+            });
+        }
     }
 
-    // Modal functions
     function showModal(title, message, type = 'info', showCancel = false) {
         return new Promise((resolve) => {
             const modal = document.getElementById('modal');
@@ -270,10 +284,8 @@
             modalHeader.textContent = title;
             modalMessage.textContent = message;
             
-            // Show/hide cancel button
             modalCancel.style.display = showCancel ? 'block' : 'none';
             
-            // Set button styles based on type
             modalConfirm.className = 'modal-btn ' + 
                 (type === 'error' ? 'modal-btn-confirm' : 
                  type === 'success' ? 'modal-btn-success' : 
@@ -281,19 +293,16 @@
             
             modal.style.display = 'flex';
             
-            // Handle confirm
             modalConfirm.onclick = () => {
                 modal.style.display = 'none';
                 resolve(true);
             };
             
-            // Handle cancel
             modalCancel.onclick = () => {
                 modal.style.display = 'none';
                 resolve(false);
             };
             
-            // Handle click outside modal
             modal.onclick = (e) => {
                 if (e.target === modal) {
                     modal.style.display = 'none';
