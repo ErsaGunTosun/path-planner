@@ -152,19 +152,14 @@ function robotPause() {
 
 function toggleRobotPanel() {
     const content = document.getElementById('robot-content');
-    const arrow = document.getElementById('robot-arrow');
     
     if (isRobotPanelOpen) {
         content.style.maxHeight = '0px';
         content.style.opacity = '0';
-        arrow.style.transform = 'rotate(180deg)';
-        arrow.innerHTML = '▼';
         isRobotPanelOpen = false;
     } else {    
         content.style.maxHeight = '200px';
         content.style.opacity = '1';
-        arrow.style.transform = 'rotate(0deg)';
-        arrow.innerHTML = '▲';
         isRobotPanelOpen = true;
     }
 } 

@@ -39,20 +39,20 @@
     <!-- Robot Control Panel -->
     <div class="robot-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: 1001;">
       <div id="robot-control-panel" style="background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); min-width: 220px; overflow: hidden; transition: all 0.3s ease-in-out;">
-        <div class="robot-panel-header" id="robot-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; cursor: pointer; border-bottom: 1px solid #e5e7eb; background: white; border-radius: 8px;">
-          <h4 style="margin: 0;">🤖 Robot Control</h4>
-          <span id="robot-arrow" style="font-size: 18px; color: #6b7280; transition: transform 0.3s ease;">▲</span>
+        <div class="robot-panel-header" id="robot-header" style="display: flex; justify-content: center; align-items: center; padding: 15px; cursor: pointer; border-bottom: 1px solid #e5e7eb; background: white; border-radius: 8px;">
+          <h4 style="margin: 0;">Robot Control Panel</h4>
         </div>
         
         <div id="robot-content" style="max-height: 0; overflow: hidden; transition: all 0.3s ease-in-out; opacity: 0;">
-          <div style="padding: 15px; padding-top: 0;">
-            <div class="robot-status" style="margin-bottom: 15px;">
-              Status: <span id="robot-status" style="color: #dc2626;">stopped</span>
+          <div style="padding: 20px;">
+            <div class="robot-status" style="margin-bottom: 20px; font-size: 16px; display: flex; align-items: center;">
+              <span style="font-weight: 500; margin-right: 8px;">Status:</span>
+              <span id="robot-status" style="color: #dc2626; font-weight: 600;">stopped</span>
             </div>
-            <div class="robot-buttons">
-              <button id="robot-start" class="robot-btn btn-start">Start</button>
-              <button id="robot-pause" class="robot-btn btn-pause" disabled>Pause</button>
-              <button id="robot-stop" class="robot-btn btn-stop" disabled>Stop</button>
+            <div class="robot-buttons" style="display: flex; gap: 10px; justify-content: center;">
+              <button id="robot-start" class="robot-btn btn-start" style="padding: 8px 16px; border-radius: 6px; border: none; background: #22c55e; color: white; font-weight: 500; cursor: pointer;">Start</button>
+              <button id="robot-pause" class="robot-btn btn-pause" style="padding: 8px 16px; border-radius: 6px; border: none; background: #f59e0b; color: white; font-weight: 500; cursor: pointer;" disabled>Pause</button>
+              <button id="robot-stop" class="robot-btn btn-stop" style="padding: 8px 16px; border-radius: 6px; border: none; background: #dc2626; color: white; font-weight: 500; cursor: pointer;" disabled>Stop</button>
             </div>
           </div>
         </div>

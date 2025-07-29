@@ -144,7 +144,6 @@ class Robot:
         self.current_target += 1
         if self.current_target >= len(self.path):
             self.status = "completed"
-            print(f"ROBOT: Path completed! Visited {len(self.path)} waypoints.")
         else:
             target_lat, target_lon = self.get_target_coordinates()
             if target_lat is not None:

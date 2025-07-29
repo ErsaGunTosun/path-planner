@@ -1,4 +1,3 @@
-// Map initialization
 function initializeMap() {
     map_10d8ba379c84a8a32988e7436c041a4b = L.map(
         "map_10d8ba379c84a8a32988e7436c041a4b",
@@ -16,7 +15,6 @@ function initializeMap() {
         lng: map_10d8ba379c84a8a32988e7436c041a4b.options.center[1]
     };
 
-    // Add tile layer
     const tile_layer = L.tileLayer(
         "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
