@@ -106,6 +106,86 @@
       .modal-btn-success:hover {
         background: #047857;
       }
+      
+      .robot-control-panel {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        z-index: 1000;
+        min-width: 220px;
+      }
+      
+      .robot-control-panel.show {
+        transform: translateY(0) !important;
+        opacity: 1 !important;
+      }
+      
+      .robot-control-panel h4 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        font-weight: bold;
+        color: #333;
+      }
+      
+      .robot-status {
+        margin-bottom: 10px;
+        font-size: 12px;
+      }
+      
+      .robot-status span {
+        font-weight: bold;
+      }
+      
+      .robot-buttons {
+        display: flex;
+        gap: 5px;
+      }
+      
+      .robot-btn {
+        flex: 1;
+        padding: 6px 8px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: bold;
+      }
+      
+      .robot-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      
+      .btn-start {
+        background: #059669;
+        color: white;
+      }
+      
+      .btn-start:hover:not(:disabled) {
+        background: #047857;
+      }
+      
+      .btn-pause {
+        background: #d97706;
+        color: white;
+      }
+      
+      .btn-pause:hover:not(:disabled) {
+        background: #b45309;
+      }
+      
+      .btn-stop {
+        background: #dc2626;
+        color: white;
+      }
+      
+      .btn-stop:hover:not(:disabled) {
+        background: #b91c1c;
+      }
     </style>
 
     <style>
@@ -136,6 +216,32 @@
 
   <body>
     <div class="folium-map" id="map_10d8ba379c84a8a32988e7436c041a4b"></div>
+    
+    <!-- Robot Control Widget (Sadece Header Tıklanabilir) -->
+    <div class="robot-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: 1001;">
+      <!-- Control Panel -->
+      <div id="robot-control-panel" style="background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); min-width: 220px; overflow: hidden; transition: all 0.3s ease-in-out;">
+        <!-- Tıklanabilir Header -->
+        <div class="robot-panel-header" id="robot-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; cursor: pointer; border-bottom: 1px solid #e5e7eb; background: white; border-radius: 8px;">
+          <h4 style="margin: 0;">🤖 Robot Control</h4>
+          <span id="robot-arrow" style="font-size: 18px; color: #6b7280; transition: transform 0.3s ease;">▲</span>
+        </div>
+        
+        <!-- Genişleyebilir İçerik -->
+        <div id="robot-content" style="max-height: 0; overflow: hidden; transition: all 0.3s ease-in-out; opacity: 0;">
+          <div style="padding: 15px; padding-top: 0;">
+            <div class="robot-status" style="margin-bottom: 15px;">
+              Status: <span id="robot-status" style="color: #dc2626;">stopped</span>
+            </div>
+            <div class="robot-buttons">
+              <button id="robot-start" class="robot-btn btn-start">Start</button>
+              <button id="robot-pause" class="robot-btn btn-pause" disabled>Pause</button>
+              <button id="robot-stop" class="robot-btn btn-stop" disabled>Stop</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     
     <!-- Modal -->
     <div id="modal" class="modal-overlay" style="display: none;">
@@ -187,6 +293,9 @@
     const markers = {{ markers | tojson }};
     const pathData = {{ path_data | tojson }};
     const markerObjects = {};
+    
+    let robotMarker = null;
+    let robotUpdateInterval = null;
     
     if (markers.length > 0) {
         markers.forEach((marker, index) => {
@@ -446,6 +555,211 @@
 
     map_10d8ba379c84a8a32988e7436c041a4b.on('click', map_click_event);
     map_10d8ba379c84a8a32988e7436c041a4b.on('moveend', map_move_event);
+    
+    let robotStatus = 'stopped';
+    
+    function createRobotMarker(lat, lon) {
+        const robotIcon = L.AwesomeMarkers.icon({
+            markerColor: 'orange',
+            iconColor: 'white',
+            prefix: 'fa',
+            icon: 'robot',
+            extraClasses: 'fa-rotate-0'
+        });
+        
+        robotMarker = L.marker([lat, lon], {icon: robotIcon})
+            .addTo(map_10d8ba379c84a8a32988e7436c041a4b)
+            .bindPopup('<div><strong>🤖 Robot</strong><br>Status: ' + robotStatus + '</div>');
+    }
+    
+         function updateRobotPosition() {
+         fetch("http://127.0.0.1:5000/robot/status")
+             .then(response => response.json())
+             .then(data => {
+                 if (data.status === "success" && robotMarker) {
+                     const robotData = data.robot_status;
+                     
+                     // Robot pozisyonunu güncelle
+                     robotMarker.setLatLng([robotData.lat, robotData.lon]);
+                     
+                     // Robot status'ünü kontrol et
+                     if (robotData.status === 'completed') {
+                         // Robot yol bitirdi - tracking'i durdur ve status'ü güncelle
+                         updateRobotStatus('stopped');
+                         stopRobotTracking();
+                         
+                         // Robot marker'ını kaldır
+                         if (robotMarker) {
+                             map_10d8ba379c84a8a32988e7436c041a4b.removeLayer(robotMarker);
+                             robotMarker = null;
+                         }
+                         
+                         showModal('Success', 'Robot completed the path!', 'success');
+                         return;
+                     }
+                     
+                     // Normal hareket devam ediyor
+                     if (robotStatus === 'moving' && robotData.status === 'moving') {
+                         fetch("http://127.0.0.1:5000/robot/update", {
+                             method: "POST",
+                             headers: {
+                                 "Content-Type": "application/x-www-form-urlencoded",
+                             }
+                         });
+                     }
+                 }
+             })
+             .catch(error => console.error('Robot position update error:', error));
+     }
+    
+    function startRobotTracking() {
+        if (robotUpdateInterval) {
+            clearInterval(robotUpdateInterval);
+        }
+        robotUpdateInterval = setInterval(updateRobotPosition, 500);
+    }
+    
+    function stopRobotTracking() {
+        if (robotUpdateInterval) {
+            clearInterval(robotUpdateInterval);
+            robotUpdateInterval = null;
+        }
+    }
+    
+    function updateRobotStatus(status) {
+        robotStatus = status;
+        const statusElement = document.getElementById('robot-status');
+        const startBtn = document.getElementById('robot-start');
+        const pauseBtn = document.getElementById('robot-pause');
+        const stopBtn = document.getElementById('robot-stop');
+        
+        statusElement.textContent = status;
+        
+        if (status === 'moving') {
+            statusElement.style.color = '#059669';
+        } else if (status === 'paused') {
+            statusElement.style.color = '#d97706';
+        } else {
+            statusElement.style.color = '#dc2626';
+        }
+        
+        startBtn.disabled = (status === 'moving');
+        pauseBtn.disabled = (status === 'stopped');
+        stopBtn.disabled = (status === 'stopped');
+    }
+    
+         function robotStart() { 
+         if (!pathData || !pathData.edges || pathData.edges.length === 0) {
+             showModal('Error', 'No path available. Create a path first!', 'error');
+             return;
+         }
+         
+         fetch("http://127.0.0.1:5000/robot/start", {
+             method: "POST",
+             headers: {
+                 "Content-Type": "application/x-www-form-urlencoded",
+             }
+         })
+         .then(response => response.json())
+         .then(data => {
+             if (data.status === "success") {
+                 if (data.message.includes("resumed") && robotMarker) {
+                     updateRobotStatus('moving');
+                     startRobotTracking();
+                     showModal('Success', data.message, 'success');
+                 } else {
+                     const firstEdge = pathData.edges[0];
+                     const firstWaypoint = firstEdge[0];
+                     
+                     if (robotMarker) {
+                         map_10d8ba379c84a8a32988e7436c041a4b.removeLayer(robotMarker);
+                     }
+                     
+                     createRobotMarker(firstWaypoint[0], firstWaypoint[1]);
+                     
+                     updateRobotStatus('moving');
+                     startRobotTracking();
+                     showModal('Success', data.message, 'success');
+                 }
+             } else {
+                 showModal('Error', data.message, 'error');
+             }
+         })
+         .catch(error => {
+             console.error('Error:', error);
+             showModal('Error', 'Network error occurred', 'error');
+         });
+     }
+    
+         function robotStop() {
+         fetch("http://127.0.0.1:5000/robot/stop", {
+             method: "POST",
+             headers: {
+                 "Content-Type": "application/x-www-form-urlencoded",
+             }
+         })
+         .then(response => response.json())
+         .then(data => {
+             if (data.status === "success") {
+                 updateRobotStatus('stopped');
+                 stopRobotTracking();
+                 
+                 if (robotMarker) {
+                     map_10d8ba379c84a8a32988e7436c041a4b.removeLayer(robotMarker);
+                     robotMarker = null;
+                 }
+             }
+         })
+         .catch(error => console.error('Error:', error));
+     }
+    
+         function robotPause() {
+         fetch("http://127.0.0.1:5000/robot/pause", {
+             method: "POST",
+             headers: {
+                 "Content-Type": "application/x-www-form-urlencoded",
+             }
+         })
+         .then(response => response.json())
+         .then(data => {
+             if (data.status === "success") {
+                 updateRobotStatus('paused');
+                 stopRobotTracking();
+             }
+         })
+         .catch(error => console.error('Error:', error));
+     }
+    
+     document.getElementById('robot-start').addEventListener('click', robotStart);
+     document.getElementById('robot-stop').addEventListener('click', robotStop);
+     document.getElementById('robot-pause').addEventListener('click', robotPause);
+     
+     // Robot Panel Toggle Functionality (Header Tıklanabilir)
+     let isRobotPanelOpen = false;
+     
+     function toggleRobotPanel() {
+         const content = document.getElementById('robot-content');
+         const arrow = document.getElementById('robot-arrow');
+         
+         if (isRobotPanelOpen) {
+             // Panel'i kapat - içerik yukarı gizle
+             content.style.maxHeight = '0px';
+             content.style.opacity = '0';
+             arrow.style.transform = 'rotate(180deg)';
+             arrow.innerHTML = '▼';
+             isRobotPanelOpen = false;
+         } else {
+             // Panel'i aç - içerik aşağı genişle
+             content.style.maxHeight = '200px';
+             content.style.opacity = '1';
+             arrow.style.transform = 'rotate(0deg)';
+             arrow.innerHTML = '▲';
+             isRobotPanelOpen = true;
+         }
+     }
+     
+     // Header'a tıklama eventi
+     document.getElementById('robot-header').addEventListener('click', toggleRobotPanel);
     
 </script>
 </html>

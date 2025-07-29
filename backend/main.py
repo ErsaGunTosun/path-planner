@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request,make_response,jsonify
 from flask_cors import CORS
 from planner.PathPlanner import PathPlanner
+from robot.Robot import Robot
 import json
 import os
 from datetime import datetime
@@ -8,6 +9,9 @@ from datetime import datetime
 all_markers = []
 
 path_data = None
+
+# Robot instance
+robot = Robot()
 
 bookmarks_file = 'bookmarks.json'
 bookmarks = []
@@ -355,6 +359,127 @@ def bookmark_delete(bookmark_id):
     except Exception as e:
         return make_response(jsonify({
             "message": f"Error deleting bookmark: {str(e)}", 
+            "status": "error"
+        }), 500)
+
+# Robot API Endpoints
+@app.route("/robot/start", methods=['POST'])
+def robot_start():
+    global robot, path_data
+    try:
+        # Eğer robot zaten paused durumundaysa, kaldığı yerden devam et
+        if robot.status == "paused" and robot.path:
+            success = robot.start()  # Sadece status'ü moving yap
+            if success:
+                return make_response(jsonify({
+                    "message": "Robot resumed successfully", 
+                    "status": "success"
+                }), 200)
+        
+        # Yeni path ile başlat
+        if path_data and 'edges' in path_data:
+            # Path data'dan koordinatları çıkar ve robota ver
+            path_coords = []
+            for edge in path_data['edges']:
+                for coord in edge:
+                    path_coords.append([coord[0], coord[1]])
+            
+            robot.set_path(path_coords)  # Bu current_target'ı sıfırlar
+            success = robot.start()
+            
+            if success:
+                return make_response(jsonify({
+                    "message": "Robot started successfully", 
+                    "status": "success"
+                }), 200)
+            else:
+                return make_response(jsonify({
+                    "message": "No path available for robot", 
+                    "status": "error"
+                }), 400)
+        else:
+            return make_response(jsonify({
+                "message": "No path created. Create a path first.", 
+                "status": "error"
+            }), 400)
+            
+    except Exception as e:
+        return make_response(jsonify({
+            "message": f"Error starting robot: {str(e)}", 
+            "status": "error"
+        }), 500)
+
+@app.route("/robot/stop", methods=['POST'])
+def robot_stop():
+    try:
+        robot.stop()
+        return make_response(jsonify({
+            "message": "Robot stopped successfully", 
+            "status": "success"
+        }), 200)
+    except Exception as e:
+        return make_response(jsonify({
+            "message": f"Error stopping robot: {str(e)}", 
+            "status": "error"
+        }), 500)
+
+@app.route("/robot/pause", methods=['POST'])
+def robot_pause():
+    try:
+        robot.pause()
+        return make_response(jsonify({
+            "message": "Robot paused successfully", 
+            "status": "success"
+        }), 200)
+    except Exception as e:
+        return make_response(jsonify({
+            "message": f"Error pausing robot: {str(e)}", 
+            "status": "error"
+        }), 500)
+
+@app.route("/robot/status", methods=['GET'])
+def robot_status():
+    try:
+        status = robot.get_status()
+        return make_response(jsonify({
+            "robot_status": status,
+            "status": "success"
+        }), 200)
+    except Exception as e:
+        return make_response(jsonify({
+            "message": f"Error getting robot status: {str(e)}", 
+            "status": "error"
+        }), 500)
+
+@app.route("/robot/position", methods=['GET'])
+def robot_position():
+    try:
+        status = robot.get_status()
+        return make_response(jsonify({
+            "lat": status["lat"],
+            "lon": status["lon"],
+            "heading": status["heading"],
+            "status": "success"
+        }), 200)
+    except Exception as e:
+        return make_response(jsonify({
+            "message": f"Error getting robot position: {str(e)}", 
+            "status": "error"
+        }), 500)
+
+@app.route("/robot/update", methods=['POST'])
+def robot_update():
+    try:
+        robot.update_position()
+        status = robot.get_status()
+        return make_response(jsonify({
+            "robot_status": status,
+            "message": "Robot position updated",
+            "status": "success"
+        }), 200)
+    except Exception as e:
+        return make_response(jsonify({
+            "message": f"Error updating robot: {str(e)}", 
             "status": "error"
         }), 500)
 
