@@ -1,0 +1,185 @@
+#map_10d8ba379c84a8a32988e7436c041a4b {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  left: 0%;
+  top: 0%;
+}
+
+.leaflet-container {
+  font-size: 1rem;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.modal-message {
+  margin-bottom: 20px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.modal-btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.modal-btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.modal-btn-confirm {
+  background: #dc2626;
+  color: white;
+}
+
+.modal-btn-confirm:hover {
+  background: #b91c1c;
+}
+
+.modal-btn-success {
+  background: #059669;
+  color: white;
+}
+
+.modal-btn-success:hover {
+  background: #047857;
+}
+
+.robot-control-panel {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  z-index: 1000;
+  min-width: 220px;
+}
+
+.robot-control-panel.show {
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+}
+
+.robot-control-panel h4 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
+
+.robot-status {
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+.robot-status span {
+  font-weight: bold;
+}
+
+.robot-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.robot-btn {
+  flex: 1;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.robot-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-start {
+  background: #059669;
+  color: white;
+}
+
+.btn-start:hover:not(:disabled) {
+  background: #047857;
+}
+
+.btn-pause {
+  background: #d97706;
+  color: white;
+}
+
+.btn-pause:hover:not(:disabled) {
+  background: #b45309;
+}
+
+.btn-stop {
+  background: #dc2626;
+  color: white;
+}
+
+.btn-stop:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+} 

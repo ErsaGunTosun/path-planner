@@ -4,18 +4,17 @@ from .PIDController import RobotPIDController
 
 class Robot:
     def __init__(self, start_lat=40.98235397234183, start_lon=29.05953843050679):
-        self.lat = start_lat  # Başlangıç konumu (enlem)
-        self.lon = start_lon  # Başlangıç konumu (boylam)
-        self.speed = 0.0002   # Hareket hızı (derece/saniye) - Hassas hareket için düşürüldü
-        self.status = "stopped"  # durumu: stopped, moving, paused
-        self.path = []        # Takip edilecek yol
-        self.current_target = 0  # Şu anki hedef waypoint
-        self.heading = 0      # Yön (derece)
-        self.arrival_threshold = 0.0003  # Hedefe varma mesafesi (3x büyütüldü - daha kolay geçiş)
+        self.lat = start_lat  # Start latitude
+        self.lon = start_lon  # Start longitude
+        self.speed = 0.0002   # Speed (degree/second) - For precise movement
+        self.status = "stopped"  # Status: stopped, moving, paused
+        self.path = []        # Path to follow
+        self.current_target = 0  # Current target waypoint
+        self.heading = 0      # Heading (degree)
+        self.arrival_threshold = 0.0003  # Arrival threshold (3x increased - easier transition)
         
-        # PID Controller
         self.pid_controller = RobotPIDController()
-        self.use_pid = True  # PID kontrolünü aktif/pasif yapmak için
+        self.use_pid = True  # Enable/disable PID control
         
     def set_path(self, path_coordinates):
         self.path = path_coordinates
@@ -31,21 +30,17 @@ class Robot:
             self.speed = new_speed
     
     def set_pid_mode(self, use_pid):
-        """PID kontrolünü aktif/pasif yap"""
         self.use_pid = use_pid
         if use_pid:
             self.pid_controller.reset_controllers()
     
     def set_position_pid_gains(self, kp, ki, kd):
-        """Position PID parametrelerini ayarla"""
         self.pid_controller.set_position_gains(kp, ki, kd)
     
     def set_heading_pid_gains(self, kp, ki, kd):  
-        """Heading PID parametrelerini ayarla"""
         self.pid_controller.set_heading_gains(kp, ki, kd)
     
     def get_pid_gains(self):
-        """Mevcut PID parametrelerini al"""
         return {
             "position": {
                 "kp": self.pid_controller.position_pid.kp,
@@ -83,7 +78,6 @@ class Robot:
             "use_pid": self.use_pid
         }
         
-        # PID debug bilgilerini ekle
         if self.use_pid and self.path and self.current_target < len(self.path):
             target_lat, target_lon = self.get_target_coordinates()
             if target_lat is not None:
@@ -109,7 +103,6 @@ class Robot:
     def get_target_coordinates(self):
         if self.current_target < len(self.path):
             coords = self.path[self.current_target]
-            # Path koordinatları [lat, lon] formatında
             return coords[0], coords[1]
         return None, None
         
@@ -123,74 +116,43 @@ class Robot:
         
         if self.use_pid:
             self._update_position_with_pid(target_lat, target_lon)
-        else:
-            self._update_position_simple(target_lat, target_lon)
     
     def _update_position_with_pid(self, target_lat, target_lon):
-        """PID ile gelişmiş hareket kontrolü"""
-        # Mevcut durumu hesapla
         distance = self.calculate_distance(self.lat, self.lon, target_lat, target_lon)
         desired_heading = self.calculate_heading(self.lat, self.lon, target_lat, target_lon)
         heading_error = self.normalize_angle(desired_heading - self.heading)
         
-        # Hedefe varma kontrolü
         if distance < self.arrival_threshold:
             self._move_to_next_waypoint()
             return
         
-        # PID Kontrolleri
-        # 1. Position PID - mesafe ne kadar büyükse o kadar hızlı git
         speed_command = abs(self.pid_controller.update_position_control(-distance))
         
-        # 2. Heading PID - yön hatası (0'a indirmek istiyoruz)  
         turn_rate = self.pid_controller.update_heading_control(heading_error)
         
-        # Robot'u güncelle
-        dt = 0.5  # 500ms update cycle
+        dt = 0.5
         
-        # Heading güncelle
         self.heading += turn_rate * dt
         self.heading = self.normalize_angle(self.heading)
         
-        # Position güncelle - mevcut heading yönünde hareket et
         heading_rad = math.radians(self.heading)
         self.lat += speed_command * math.cos(heading_rad) * dt
         self.lon += speed_command * math.sin(heading_rad) * dt
     
-    def _update_position_simple(self, target_lat, target_lon):
-        """Basit hareket kontrolü (eski metod)"""
-        distance = self.calculate_distance(self.lat, self.lon, target_lat, target_lon)
-        
-        if distance < self.arrival_threshold:
-            self._move_to_next_waypoint()
-        else:
-            # Yön hesapla ve güncelle
-            self.heading = self.calculate_heading(self.lat, self.lon, target_lat, target_lon)
-            
-            # Hedefe doğru hareket et
-            lat_diff = target_lat - self.lat  
-            lon_diff = target_lon - self.lon
-            
-            # Normalleştirilmiş yön vektörü
-            self.lat += (lat_diff / distance) * self.speed
-            self.lon += (lon_diff / distance) * self.speed
-    
+
     def _move_to_next_waypoint(self):
         self.current_target += 1
         if self.current_target >= len(self.path):
             self.status = "completed"
-            # Robot path'i bitirdi, durduralım
             print(f"ROBOT: Path completed! Visited {len(self.path)} waypoints.")
         else:
             target_lat, target_lon = self.get_target_coordinates()
             if target_lat is not None:
                 self.heading = self.calculate_heading(self.lat, self.lon, target_lat, target_lon)
-                # PID controller'ları yeni waypoint için sıfırla
                 if self.use_pid:
                     self.pid_controller.reset_controllers()
     
     def normalize_angle(self, angle):
-        """Açıyı -180 ile +180 arasına normalize et"""
         while angle > 180:
             angle -= 360
         while angle < -180:

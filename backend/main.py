@@ -39,8 +39,12 @@ options = {
     "center_map":{"lat":40.98235397234183, "lon":29.05953843050679}
 }
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 CORS(app)
+
+@app.route("/")
+def index():
+    return render_template('Map.html', markers=all_markers, path_data=path_data,center_map=options["center_map"])
 
 @app.route("/map")
 def map():
@@ -484,4 +488,4 @@ def robot_update():
         }), 500)
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True, host='127.0.0.1', port=5000)

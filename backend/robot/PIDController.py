@@ -8,12 +8,10 @@ class PID:
         self.kd = kd
         self.setpoint = setpoint
         
-        # Internal variables
         self.integral = 0
         self.previous_error = 0
         self.last_time = time.time()
         
-        # Limits
         self.integral_limit = 100  # Anti-windup
         self.output_limit = None
     
@@ -37,35 +35,28 @@ class PID:
         now = time.time()
         dt = now - self.last_time
         
-        # Avoid division by zero
         if dt <= 0:
             dt = 0.01
         
-        # Calculate error
         error = self.setpoint - current_value
         
-        # Proportional term
         p_term = self.kp * error
         
-        # Integral term with anti-windup
         self.integral += error * dt
         if abs(self.integral) > self.integral_limit:
             self.integral = math.copysign(self.integral_limit, self.integral)
         i_term = self.ki * self.integral
         
-        # Derivative term
+        
         derivative = (error - self.previous_error) / dt
         d_term = self.kd * derivative
         
-        # PID output
         output = p_term + i_term + d_term
         
-        # Apply output limits
         if self.output_limit:
             min_val, max_val = self.output_limit
             output = max(min_val, min(output, max_val))
         
-        # Update for next iteration
         self.previous_error = error
         self.last_time = now
         
@@ -89,13 +80,11 @@ class RobotPIDController:
     def __init__(self):
 
         self.position_pid = PID(kp=2.0, ki=0.05, kd=0.1, setpoint=0)
-        self.position_pid.set_output_limit(-0.002, 0.002)  # Speed limits (5x düşürüldü)
+        self.position_pid.set_output_limit(-0.002, 0.002)
         
-        # Heading PID - yön kontrolü
         self.heading_pid = PID(kp=1.5, ki=0.02, kd=0.1, setpoint=0)  
-        self.heading_pid.set_output_limit(-20, 20)  # Turn rate limits (3x düşürüldü)
+        self.heading_pid.set_output_limit(-20, 20)
         
-        # Speed PID - hız kontrolü (opsiyonel)
         self.speed_pid = PID(kp=1.0, ki=0.2, kd=0.0, setpoint=0)
         
     def update_position_control(self, current_distance):
