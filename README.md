@@ -1,4 +1,4 @@
-# Intelligent Path Planner
+# Path Planner
 
 An advanced web-based robotic path planning system that combines real-world mapping data with sophisticated navigation algorithms. Built with Flask backend and React frontend, featuring real-time robot simulation, obstacle avoidance, and comprehensive waypoint management for autonomous navigation research and development.
 
@@ -76,7 +76,6 @@ frontend/
 #### Frontend Technologies
 - **React 19.1.0**: Modern UI framework with hooks and context
 - **Tailwind CSS 3.4.17**: Utility-first CSS framework for responsive design
-- **Axios 1.10.0**: HTTP client for REST API communication
 - **React Icons 5.5.0**: Comprehensive icon library
 
 ### Control Systems
@@ -92,14 +91,12 @@ frontend/
 
 - **Python 3.8+** with pip package manager
 - **Node.js 16+** and npm/yarn
-- **Git** for version control
-- **Modern web browser** (Chrome, Firefox, Safari, Edge)
 
 ### Installation
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-username/ersgn_path-planner.git
+   git clone https://github.com/ErsaGunTosun/ersgn_path-planner.git
    cd ersgn_path-planner
    ```
 
@@ -146,7 +143,6 @@ frontend/
 | **Create Path** | Control Panel Button | Generate optimal path between waypoints |
 | **Start Robot** | Control Panel Button | Begin robot simulation following the path |
 | **Pause/Resume** | Control Panel Button | Pause or resume robot movement |
-| **Speed Control** | Slider | Adjust robot movement speed (0.0001 - 0.001 deg/s) |
 | **Clear Path** | Control Panel Button | Remove current path and reset |
 | **Save Bookmark** | Bookmark Panel | Save current location with custom name |
 | **Load Bookmark** | Bookmark Panel | Jump to saved location instantly |
@@ -280,76 +276,37 @@ def robot_status():
     })
 ```
 
-## Data Analysis & Visualization
-
-### Performance Analytics
-
-The system provides comprehensive path and movement analysis:
-
-```python
-# Analyze robot performance and path efficiency
-def analyze_path_performance(route_data):
-    total_distance = calculate_total_distance(route_data)
-    travel_time = route_data[-1]['timestamp'] - route_data[0]['timestamp']
-    average_speed = total_distance / travel_time
-    
-    return {
-        'total_distance': total_distance,
-        'travel_time': travel_time,
-        'average_speed': average_speed,
-        'path_efficiency': calculate_efficiency_score(route_data)
-    }
-```
-
-### Available Visualizations
-
-1. **Interactive Path Rendering**: Real-time path visualization on OpenStreetMap
-2. **Robot Movement Tracking**: Live position updates with trajectory history
-3. **Obstacle Visualization**: Dynamic obstacle placement and avoidance zones
-4. **Performance Metrics**: Speed, distance, and efficiency analytics
-5. **Bookmark Clustering**: Spatial analysis of saved locations
-
-### Sample Performance Output
-
-```
-=== Path Planning Analysis ===
-Route Analysis:
-  Total Distance: 2.34 km
-  Estimated Travel Time: 15.6 minutes
-  Number of Waypoints: 8
-  Obstacles Avoided: 3
-  Path Efficiency Score: 0.87/1.00
-  
-Robot Performance:
-  Average Speed: 0.00025 deg/s
-  Maximum Speed: 0.0004 deg/s
-  Position Accuracy: ±0.0001 degrees
-  PID Stability Index: 0.92/1.00
-```
-
 ## API Endpoints
 
 ### Path Planning
-- `POST /path/create` - Generate optimal path between waypoints
-- `GET /path/data` - Retrieve current path information
-- `POST /path/clear` - Clear current path
+- `POST /path/create` - Generate optimal path between 2 markers
+- `POST /path/create_astar` - Generate A* path with obstacle avoidance (supports multiple markers)
+- `POST /path/clear` - Clear current path and all markers
 
 ### Robot Control
-- `POST /robot/start` - Start robot movement
-- `POST /robot/stop` - Stop robot movement
-- `POST /robot/set_speed` - Adjust robot speed
-- `GET /robot/status` - Get current robot status and position
+- `POST /robot/start` - Start or resume robot movement
+- `POST /robot/stop` - Stop robot movement completely
+- `POST /robot/pause` - Pause robot movement (can be resumed)
+- `GET /robot/status` - Get complete robot status and position
+- `GET /robot/position` - Get robot position and heading only
+- `POST /robot/update` - Update robot position (single step)
 
-### Markers & Obstacles
-- `POST /markers/add` - Add new waypoint marker
-- `POST /obstacles/add` - Add obstacle to map
-- `GET /markers/all` - Get all current markers
-- `POST /markers/clear` - Clear all markers
+### Markers & Map Control
+- `POST /add_marker` - Add new waypoint marker or obstacle (based on mode)
+- `POST /remove_marker` - Remove specific marker by coordinates
+- `POST /change_center` - Change map center coordinates
+- `POST /options/marker` - Enable marker placement mode
+- `POST /options/obstacle` - Enable obstacle placement mode
 
 ### Bookmarks
-- `GET /bookmarks` - Retrieve saved bookmarks
-- `POST /bookmarks/save` - Save new bookmark
-- `DELETE /bookmarks/delete` - Remove bookmark
+- `POST /bookmark/save` - Save current route with markers and path
+- `GET /bookmarks/list` - Retrieve all saved bookmarks
+- `POST /bookmark/load/<bookmark_id>` - Load specific bookmark by ID
+- `DELETE /bookmark/delete/<bookmark_id>` - Delete specific bookmark by ID
+
+### Main Routes
+- `GET /` - Main map interface (HTML template)
+- `GET /map` - Map interface (HTML template)
 
 ## Data Storage
 
@@ -469,19 +426,3 @@ class PathPlanner:
 - **Smooth Trajectory Following**: PID-controlled movement with minimal overshoot
 - **Adaptive Speed Control**: Dynamic speed adjustment based on path curvature
 - **Precision Waypoint Navigation**: High-accuracy waypoint approach and departure
-
-### System Optimization
-- **Caching System**: Intelligent caching of map data and path calculations
-- **Concurrent Processing**: Multi-threaded path planning for improved performance
-- **Memory Management**: Efficient handling of large map datasets
-
-## Acknowledgments
-
-- **OpenStreetMap Contributors**: For providing comprehensive global map data
-- **OSMnx Development Team**: For the powerful network analysis library
-- **NetworkX Community**: For graph algorithms and network analysis tools
-- **React Development Team**: For the modern frontend framework
-- **Flask Community**: For the lightweight and flexible backend framework
-- **Istanbul Technical University**: For providing the default location coordinates
-- **Open Source Community**: For the extensive ecosystem of libraries and tools
-
