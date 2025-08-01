@@ -7,10 +7,6 @@ An advanced web-based robotic path planning system that combines real-world mapp
 ![Flask](https://img.shields.io/badge/Flask-3.1.1-red)
 ![OSMnx](https://img.shields.io/badge/OSMnx-2.0.5-orange)
 
-## 🎬 Demo Video
-
-[Demo video/GIF would go here]
-
 ## Project Overview
 
 This project develops an intelligent path planning system capable of generating optimal routes for robotic navigation using real-world OpenStreetMap data. The system combines advanced graph algorithms, PID control systems, and interactive web interfaces to provide comprehensive path planning solutions for autonomous vehicles and robots.

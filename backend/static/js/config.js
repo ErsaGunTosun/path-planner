@@ -9,7 +9,7 @@ let robotStatus = 'stopped';
 let isRobotPanelOpen = false;
 
 const API_BASE_URL = "http://127.0.0.1:5000";
-const ROBOT_UPDATE_INTERVAL = 500;
+const ROBOT_UPDATE_INTERVAL = 200;
 
 let center;
 
